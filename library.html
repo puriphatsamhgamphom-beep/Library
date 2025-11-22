@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototype ระบบห้องสมุด "ความรู้รอบโลก"</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light background */
+        }
+        .tab-button.active {
+            border-bottom: 3px solid #3b82f6; /* Blue border for active tab */
+            color: #1e40af; /* Darker blue text */
+            font-weight: 600;
+        }
+        .scroll-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        /* Custom modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.3s;
+        }
+        .email-modal-content, .edit-modal-content { /* Added .edit-modal-content */
+            background-color: #fefefe;
+            margin: 5% auto; /* Adjusted margin for larger form */
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-xl p-6 md:p-10">
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-3xl font-bold text-gray-800">ระบบห้องสมุด "ความรู้รอบโลก"</h1>
+            <p class="text-lg text-blue-600 font-medium">Prototype: การจัดการสถานะหนังสือและการแจ้งเตือนอัตโนมัติ</p>
+            <div class="mt-2 text-sm text-gray-500 flex justify-between items-center">
+                <span>สถานะผู้ใช้: <span id="user-id-display">กำลังเชื่อมต่อ...</span> | วันที่: 20 พ.ย. 2568</span>
+                
+                <!-- NEW: Role Selector -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-gray-700">เปลี่ยนบทบาท:</span>
+                    <select id="user-role-selector" class="p-1 border border-gray-300 rounded-lg text-sm bg-white focus:ring-blue-500 focus:border-blue-500">
+                        <option value="borrower">ผู้ยืม (Borrower)</option>
+                        <option value="librarian">บรรณารักษ์ (Librarian)</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation Area -->
+        <div class="flex border-b border-gray-200 mb-6">
+            <!-- Borrower Tabs -->
+            <div id="borrower-tabs" class="flex w-full">
+                <a href="#" data-tab="borrower-status" class="tab-button active py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    1. ค้นหาสถานะหนังสือ (Search & Status)
+                </a>
+                <a href="#" data-tab="borrower-history" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    2. ประวัติการยืมส่วนตัว (Personal History)
+                </a>
+                <a href="#" data-tab="borrower-alerts" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    3. การแจ้งเตือนอัตโนมัติ (Automated Alerts)
+                </a>
+            </div>
+            
+            <!-- Librarian Tabs (Initially Hidden) -->
+            <div id="librarian-tabs" class="hidden flex w-full">
+                <a href="#" data-tab="librarian-management" class="tab-button active py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    1. การจัดการยืม-คืน (Borrow/Return Management)
+                </a>
+                <a href="#" data-tab="librarian-tracking" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    2. สถานะหนังสือทั้งหมด (Tracking)
+                </a>
+                <a href="#" data-tab="librarian-add" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    3. เพิ่มหนังสือใหม่ (Add New Book)
+                </a>
+                <a href="#" data-tab="librarian-borrowers" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    4. รายชื่อสมาชิก (Borrower List)
+                </a>
+                <a href="#" data-tab="librarian-fines" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
+                    5. จัดการค่าปรับ (Fines Management)
+                </a>
+            </div>
+        </div>
+
+        <!-- Tab Content Area -->
+        
+        <!-- ========================================================== -->
+        <!-- BORROWER MODE CONTENT -->
+        <!-- ========================================================== -->
+
+        <!-- 1. Borrower: Search & Status (Read-Only) -->
+        <div id="tab-borrower-status" class="tab-content">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">ค้นหาสถานะหนังสือแบบเรียลไทม์ (Real-time Status)</h2>
+            <div class="mb-4 flex gap-4">
+                <input type="text" id="borrower-search-input" placeholder="ค้นหาชื่อหนังสือ / ISBN / รหัส RFID" 
+                       class="flex-grow p-3 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <button id="borrower-search-btn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ค้นหา</button>
+            </div>
+            <!-- Reusing the status table content -->
+            <div id="status-table-container" class="bg-gray-50 p-4 rounded-lg shadow-inner scroll-list">
+                <p class="text-center text-gray-500 p-4">กำลังโหลดข้อมูลหนังสือ...</p>
+            </div>
+        </div>
+
+        <!-- 2. Borrower: Personal History -->
+        <div id="tab-borrower-history" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">ประวัติการยืม-คืนของฉัน (สมาชิก 001)</h2>
+            <div class="bg-gray-50 p-4 rounded-lg shadow-inner scroll-list">
+                <div class="grid grid-cols-12 gap-2 font-bold text-sm text-gray-600 border-b pb-2 mb-2">
+                    <div class="col-span-4">ชื่อหนังสือ</div>
+                    <div class="col-span-2">รหัส RFID</div>
+                    <div class="col-span-2">วันที่ยืม</div>
+                    <div class="col-span-3">วันที่คืน</div>
+                    <div class="col-span-1">สถานะ</div>
+                </div>
+                <!-- Container for JS rendered history data -->
+                <div id="borrower-history-content">
+                    <!-- History data will be rendered here by JS -->
+                </div>
+                
+                <p class="mt-4 text-xs text-gray-500">* ข้อมูลนี้เป็นประวัติการยืม-คืนส่วนตัวของคุณทั้งหมด</p>
+            </div>
+        </div>
+
+        <!-- 3. Borrower: Automated Alerts -->
+        <div id="tab-borrower-alerts" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">รายการแจ้งเตือนและกำหนดส่งคืน</h2>
+            <div class="space-y-4">
+                
+                <!-- Overdue Alert -->
+                <div class="p-4 bg-red-100 border-l-4 border-red-500 rounded-lg flex justify-between items-center shadow">
+                    <div>
+                        <p class="font-bold text-red-800">⚠️ เลยกำหนดส่งคืน!</p>
+                        <p class="text-sm text-red-700">หนังสือ: กลยุทธ์การลงทุนยุคใหม่ | กำหนดส่ง: 18 พ.ย. 2568</p>
+                        <p class="text-xs text-red-600 mt-1">ค่าปรับสะสม (จำลอง): <span id="fine-amount">20.00 บาท</span> (2 วัน x 10 บาท)</p>
+                    </div>
+                    <button class="text-red-500 hover:text-red-700 text-sm font-semibold">ส่งแจ้งเตือนซ้ำ</button>
+                </div>
+
+                <!-- Reminder Alert (Updated with Email Preview Button) -->
+                <div class="p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center shadow">
+                    <div class="mb-2 md:mb-0">
+                        <p class="font-bold text-yellow-800">🔔 ใกล้ถึงกำหนดส่งคืน</p>
+                        <p class="text-sm text-yellow-700">หนังสือ: พลังของนิสัย (The Power of Habit) | กำหนดส่ง: 25 พ.ย. 2568</p>
+                        <p class="text-xs text-yellow-600 mt-1">การแจ้งเตือนนี้ถูกส่งทางอีเมลและแอปพลิเคชัน</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="preview-email-btn" class="px-3 py-1 bg-yellow-500 text-white text-sm font-semibold rounded-xl hover:bg-yellow-600 transition duration-150 shadow-md">
+                            ดูตัวอย่างอีเมล
+                        </button>
+                        <button class="text-yellow-500 hover:text-yellow-700 text-sm font-semibold">จัดการการแจ้งเตือน</button>
+                    </div>
+                </div>
+
+                <!-- Confirmation/Status Message -->
+                <div class="p-4 bg-green-100 border-l-4 border-green-500 rounded-lg shadow">
+                    <p class="font-bold text-green-800">✅ การดำเนินการเสร็จสมบูรณ์</p>
+                    <div id="return-confirmation-msg" class="text-sm text-green-700">หนังสือ "การทำอาหารเพื่อสุขภาพ" ถูกคืนสำเร็จและอยู่ระหว่างการจัดเข้าชั้น</div>
+                </div>
+
+                <!-- No Alerts -->
+                <div class="p-4 bg-gray-100 border-l-4 border-gray-400 rounded-lg text-center shadow">
+                    <p class="text-gray-600">ไม่มีการแจ้งเตือนเร่งด่วนอื่น ๆ ในขณะนี้</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- LIBRARIAN MODE CONTENT -->
+        <!-- ========================================================== -->
+
+        <!-- 1. Librarian: Borrow/Return Management -->
+        <div id="tab-librarian-management" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">1. การจัดการยืม-คืน (Borrow/Return Management)</h2>
+            <div class="bg-white p-8 rounded-2xl mb-6 border border-gray-200 shadow-xl">
+                <p class="text-base text-gray-600 mb-6">กรุณาสแกนรหัสหนังสือและระบุรหัสสมาชิกเพื่อดำเนินการยืมหรือคืน</p>
+
+                <div class="flex flex-col md:flex-row gap-5 items-end mb-5">
+                    <div class="flex-grow w-full">
+                        <label for="rfid-input" class="block text-sm font-medium text-gray-700 mb-2">สแกนรหัส RFID/บาร์โค้ดหนังสือ</label>
+                        <input type="text" id="rfid-input" placeholder="สแกนรหัส RFID หรือพิมพ์รหัสหนังสือ" 
+                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-base">
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex flex-col md:flex-row gap-5 items-end">
+                    <div class="flex-grow w-full">
+                        <label for="borrower-id-input" class="block text-sm font-medium text-gray-700 mb-2">รหัสสมาชิกผู้ยืม (Required for Borrow)</label>
+                        <input type="text" id="borrower-id-input" placeholder="ป้อนรหัสสมาชิก (เช่น USER002)" 
+                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-base">
+                    </div>
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button id="borrow-btn" class="flex-1 px-8 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition duration-150 shadow-md text-base">
+                            บันทึกการยืม
+                        </button>
+                        <button id="return-btn" class="flex-1 px-8 py-3.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition duration-150 shadow-md text-base">
+                            บันทึกการคืน
+                        </button>
+                    </div>
+                </div>
+                <p class="mt-5 text-xs text-gray-500 text-center md:text-left">ระบบจะทำการบันทึกสถานะและตำแหน่งหนังสือโดยอัตโนมัติ</p>
+            </div>
+        </div>
+
+        <!-- 2. Librarian: All Book Tracking -->
+        <div id="tab-librarian-tracking" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">2. สถานะหนังสือทั้งหมดแบบเรียลไทม์ (Full Inventory Status)</h2>
+            <div class="mb-4 flex gap-4">
+                <input type="text" id="librarian-search-input" placeholder="ค้นหาชื่อหนังสือ / ISBN / รหัส RFID" 
+                       class="flex-grow p-3 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <button id="librarian-search-btn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ค้นหา</button>
+            </div>
+            <!-- Reusing the status table content -->
+            <div id="tracking-table-container" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl scroll-list">
+                <p class="text-center text-gray-500 p-4">กำลังโหลดข้อมูลหนังสือ...</p>
+            </div>
+        </div>
+        
+        <!-- 3. Librarian: Add New Book (NEW TAB) -->
+        <div id="tab-librarian-add" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">3. เพิ่มหนังสือใหม่ (New Book Registration)</h2>
+            <div class="bg-white p-8 rounded-2xl mb-6 border border-gray-200 shadow-xl">
+                <p class="text-base text-gray-600 mb-6">กรุณากรอกข้อมูลหนังสือใหม่เพื่อบันทึกเข้าสู่ระบบฐานข้อมูลเรียลไทม์</p>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label for="new-title-input" class="block text-sm font-medium text-gray-700 mb-2">ชื่อหนังสือ</label>
+                        <input type="text" id="new-title-input" placeholder="เช่น กลยุทธ์การลงทุนยุคใหม่ 2" 
+                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-base">
+                    </div>
+                    <div>
+                        <label for="new-rfid-input" class="block text-sm font-medium text-gray-700 mb-2">รหัส RFID/บาร์โค้ด (Key ID)</label>
+                        <input type="text" id="new-rfid-input" placeholder="สแกนรหัส RFID/บาร์โค้ด หรือพิมพ์ เช่น R2024008" 
+                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-base">
+                    </div>
+                    <div>
+                        <label for="new-location-input" class="block text-sm font-medium text-gray-700 mb-2">ตำแหน่งชั้นวางเริ่มต้น</label>
+                        <input type="text" id="new-location-input" placeholder="เช่น ชั้น B3 / 05" 
+                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-base">
+                    </div>
+                </div>
+
+                <button id="add-new-book-btn" class="mt-8 w-full py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition duration-150 shadow-md text-base">
+                    บันทึกหนังสือใหม่เข้าสู่ระบบ
+                </button>
+            </div>
+        </div>
+        
+        <!-- 4. Librarian: Borrower List (NEW TAB) -->
+        <div id="tab-librarian-borrowers" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">4. รายชื่อสมาชิกในระบบ (Registered Borrower List)</h2>
+            <div class="mb-4 flex gap-4">
+                <input type="text" id="borrower-list-search-input" placeholder="ค้นหารหัสสมาชิก / ชื่อสมาชิก" 
+                       class="flex-grow p-3 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <button id="borrower-list-search-btn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ค้นหา</button>
+            </div>
+            <div id="borrower-list-container" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl scroll-list">
+                <p class="text-center text-gray-500 p-4">กำลังโหลดรายชื่อสมาชิก...</p>
+            </div>
+        </div>
+
+        <!-- 5. Librarian: Fines Management (NEW TAB) -->
+        <div id="tab-librarian-fines" class="tab-content hidden">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">5. จัดการค่าปรับ (Fines Management)</h2>
+            <div class="bg-white p-8 rounded-2xl mb-6 border border-gray-200 shadow-xl">
+                <p class="text-base text-gray-600 mb-6">ป้อนรหัสสมาชิกเพื่อตรวจสอบยอดค่าปรับค้างชำระและบันทึกการชำระเงิน</p>
+                
+                <div class="flex flex-col md:flex-row gap-4 items-end">
+                    <div class="flex-grow w-full">
+                        <label for="fine-borrower-input" class="block text-sm font-medium text-gray-700 mb-2">รหัสสมาชิก</label>
+                        <input type="text" id="fine-borrower-input" placeholder="เช่น USER002" 
+                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-base">
+                    </div>
+                    <button id="check-fine-btn" class="px-8 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition duration-150 shadow-md text-base w-full md:w-auto">
+                        ตรวจสอบค่าปรับ
+                    </button>
+                </div>
+
+                <!-- Fine Details Output -->
+                <div id="fine-details-output" class="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-200 hidden">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">สถานะค่าปรับของ: <span id="fine-borrower-name"></span></h3>
+                    <p class="text-sm text-gray-600 mb-3">ยอดค้างชำระปัจจุบัน (จำลอง): <span id="current-fine-total" class="text-xl font-bold text-red-600">0.00 บาท</span></p>
+                    
+                    <div class="flex gap-4 items-center">
+                        <p class="text-sm text-gray-600">สถานะ: <span id="fine-status" class="font-semibold text-red-600">ค้างชำระ</span></p>
+                        <button id="pay-fine-btn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition duration-150 shadow-md text-sm disabled:bg-gray-400">
+                            บันทึกการชำระค่าปรับ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- Custom Modal for general Notifications/Errors (Existing) -->
+    <div id="custom-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-message" class="text-lg font-semibold mb-4 text-center"></p>
+            <button id="modal-close-btn" class="w-full py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ตกลง</button>
+        </div>
+    </div>
+
+    <!-- Modal for Email Preview -->
+    <div id="email-preview-modal" class="modal">
+        <div class="email-modal-content">
+            <div class="flex justify-between items-center border-b pb-2 mb-4">
+                <h3 class="text-xl font-bold text-gray-800">ตัวอย่างอีเมลแจ้งเตือนการคืนหนังสือ</h3>
+                <button onclick="closeEmailPreviewModal()" class="text-gray-400 hover:text-gray-600 font-bold text-2xl">&times;</button>
+            </div>
+            
+            <div class="bg-white border border-gray-200 p-4 rounded-lg shadow-inner">
+                <p class="text-sm font-medium text-gray-700 mb-2">หัวข้อ: 🔔 แจ้งเตือน: ใกล้ถึงกำหนดส่งคืนหนังสือจากระบบห้องสมุด "ความรู้รอบโลก"</p>
+                <hr class="mb-3">
+                <div class="text-gray-800 text-sm space-y-3">
+                    <p>เรียน สมาชิกหมายเลข 001,</p>
+                    <p>ระบบแจ้งเตือนอัตโนมัติของห้องสมุดฯ ขอเรียนแจ้งให้ทราบว่า หนังสือที่คุณได้ยืมไปใกล้ถึงกำหนดส่งคืนแล้ว</p>
+                    
+                    <div class="p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                        <p class="font-semibold">รายละเอียด:</p>
+                        <ul class="list-disc list-inside ml-2 text-xs space-y-1">
+                            <li>ชื่อหนังสือ: พลังของนิสัย (The Power of Habit)</li>
+                            <li>วันที่ยืม: 11 พ.ย. 2568</li>
+                            <li>กำหนดส่งคืน: <span class="text-red-600 font-bold">25 พ.ย. 2568</span></li>
+                            <li>เหลือเวลา: 5 วัน</li>
+                        </ul>
+                    </div>
+
+                    <p>กรุณาตรวจสอบและดำเนินการส่งคืนก่อนกำหนด เพื่อป้องกันการถูกปรับ และเพื่อให้เพื่อนๆ ท่านอื่นสามารถยืมหนังสือได้ต่อ</p>
+                    <p>ขอขอบคุณที่ให้ความร่วมมือครับ/ค่ะ</p>
+                    <p class="text-xs text-gray-500">---<br>ระบบแจ้งเตือนอัตโนมัติ<br>ห้องสมุด "ความรู้รอบโลก"</p>
+                </div>
+            </div>
+            
+            <button onclick="closeEmailPreviewModal()" class="mt-6 w-full py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ปิด</button>
+        </div>
+    </div>
+    
+    <!-- Modal for Book Editing -->
+    <div id="edit-book-modal" class="modal">
+        <div class="edit-modal-content">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">แก้ไขข้อมูลหนังสือ: <span id="edit-book-rfid-display" class="text-blue-600"></span></h3>
+            <div class="space-y-4 pt-2">
+                <input type="hidden" id="edit-original-rfid">
+
+                <div>
+                    <label for="edit-title" class="block text-sm font-medium text-gray-700 mb-2">ชื่อหนังสือ</label>
+                    <input type="text" id="edit-title" class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                </div>
+                
+                <div>
+                    <label for="edit-location" class="block text-sm font-medium text-gray-700 mb-2">ตำแหน่งชั้นวาง</label>
+                    <input type="text" id="edit-location" class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                </div>
+
+                <p class="text-sm text-red-600 pt-2 border-t border-gray-100">**คำเตือน:** หากหนังสือถูกยืมออกอยู่ (สถานะ: <span id="edit-status-display" class="font-semibold"></span>) การแก้ไขรหัส RFID จะทำให้สถานะถูกรีเซ็ต</p>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="save-edit-btn" class="flex-1 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition duration-150 shadow-md text-base">
+                    บันทึกการแก้ไข
+                </button>
+                <button onclick="closeEditBookModal()" class="flex-1 py-3.5 bg-gray-500 text-white font-semibold rounded-xl hover:bg-gray-600 transition duration-150 shadow-md text-base">
+                    ยกเลิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Firebase SDK Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // setLogLevel('Debug'); // Uncomment for detailed Firestore debugging
+
+        // --- Configuration & Data ---
+        const FINE_PER_DAY = 3.00; // ค่าปรับต่อวัน (บาท) *** CHANGED TO 3.00 ***
+        const TODAY_MOCK = new Date('2025-11-20'); // วันที่ปัจจุบันจำลอง (20 พ.ย. 2568)
+
+        // Hardcoded Firebase Config based on user's request
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_5tvud82X6NSIoeljZzCRhkIxD6rRSS8",
+            authDomain: "library-e9d52.firebaseapp.com",
+            projectId: "library-e9d52",
+            storageBucket: "library-e9d52.firebasestorage.app",
+            messagingSenderId: "797194702694",
+            appId: "1:797194702694:web:9e02351303b1c42ac7c2a7",
+            measurementId: "G-JYJ2DKFBZ9"
+        };
+        
+        const appId = firebaseConfig.projectId; 
+        const initialAuthToken = null; 
+
+        let db = null;
+        let auth = null;
+        let userId = null;
+        
+        // Central data store for books (updated by Firestore listener)
+        let currentBookData = {}; 
+        let currentOverdueFines = {}; // Tracks overdue books for fines management
+
+        // Mock data for Borrower's Personal History (local to the client)
+        const mockHistoryData = [
+            // Note: R2024005 is set to "borrowing" to demonstrate the overdue status
+            { title: 'กลยุทธ์การลงทุนยุคใหม่', rfid: 'R2024005', dateBorrowed: '10 พ.ย. 2568', dateDue: '18 พ.ย. 2568', dateReturned: null, status: 'borrowing' },
+            { title: 'การออกแบบ UI/UX', rfid: 'R2024006', dateBorrowed: '25 ต.ค. 2568', dateDue: '5 พ.ย. 2568', dateReturned: '5 พ.ย. 2568', status: 'returned' },
+            { title: 'เทคนิคการนำเสนออย่างมืออาชีพ', rfid: 'R2024007', dateBorrowed: '1 ต.ค. 2568', dateDue: '8 ต.ค. 2568', dateReturned: '8 ต.ค. 2568', status: 'returned' }
+        ];
+
+        // Mock Borrower Data for validation and list display
+        const mockBorrowerData = {
+            'USER001': { name: 'สมาชิก กิตติมาศักดิ์' },
+            'USER002': { name: 'นักเรียน A' },
+            'USER003': { name: 'นักเรียน B' },
+            'สมาชิก 001': { name: 'ผู้ใช้หลัก (Mock)' } // For mock history use
+        };
+
+
+        let currentRole = 'borrower'; // Default mode
+
+        // --- Firebase Setup ---
+
+        function initFirebase() {
+            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
+                console.error("Firebase configuration is missing or incomplete. Cannot initialize.");
+                return;
+            }
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Sign in anonymously since custom token is unavailable outside Canvas
+                signInAnonymously(auth).then(() => {
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            document.getElementById('user-id-display').textContent = `Anon (${userId.substring(0, 4)}...)`;
+                            startDataListener(); // Start listening for persistent data
+                        } else {
+                            document.getElementById('user-id-display').textContent = 'Signed Out';
+                            console.error("Failed to sign in anonymously.");
+                        }
+                    });
+                }).catch(error => {
+                    console.error("Anonymous sign-in failed:", error);
+                    // Crucial diagnostic message for the user:
+                    console.error("FIX REQUIRED: Go to Firebase Console -> Authentication -> Sign-in method, and ENABLE 'Anonymous'. (auth/configuration-not-found)");
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        }
+
+        /**
+         * Listens for real-time updates on the public book collection (inventory).
+         */
+        function startDataListener() {
+            if (!db) return;
+
+            // Use public path for shared book data
+            const booksColRef = collection(db, `artifacts/${appId}/public/data/books`);
+            
+            onSnapshot(booksColRef, (snapshot) => {
+                currentBookData = {}; 
+                currentOverdueFines = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    currentBookData[doc.id] = data;
+                    
+                    // --- Fine Calculation Check (Mock Logic) ---
+                    if (data.status === 'borrowed' && data.dateDue) {
+                        const days = calculateFineDays(data.dateDue);
+                        if (days > 0) {
+                            if (!currentOverdueFines[data.borrower]) {
+                                currentOverdueFines[data.borrower] = { books: [], totalFine: 0 };
+                            }
+                            const fineAmount = days * FINE_PER_DAY;
+                            currentOverdueFines[data.borrower].books.push({ rfid: doc.id, title: data.title, days: days, fine: fineAmount });
+                            currentOverdueFines[data.borrower].totalFine += fineAmount;
+                        }
+                    }
+                });
+                
+                updateStatusTables(); 
+                populateNextRfid(); 
+                renderBorrowerHistory(); // Ensure history reflects any new return actions (though history is mock)
+                // Update overdue fine display in Borrower Alerts
+                updateBorrowerFineDisplay();
+
+            }, (error) => {
+                console.error("Error listening to book data:", error);
+                document.getElementById('status-table-container').innerHTML = `<p class="text-center text-red-500 p-4">เกิดข้อผิดพลาดในการโหลดข้อมูล: โปรดตรวจสอบกฎความปลอดภัยของ Firestore</p>`;
+            });
+            
+            seedInitialDataIfEmpty();
+        }
+
+        /**
+         * Calculates overdue days (Mock: Assumes dateDue is formatted 'DD MMM YYYY').
+         */
+        function calculateFineDays(dateDueString) {
+             // If the due date matches the mock overdue date (18 พ.ย. 2568), returns 2 days overdue (Today is 20 พ.ย. 2568)
+             if (dateDueString === '18 พ.ย. 2568') { 
+                 return 2; 
+             }
+             return 0; 
+        }
+        
+        /**
+         * Updates the fine display in the Borrower Alerts tab.
+         */
+        function updateBorrowerFineDisplay() {
+            const mockBorrowerId = 'สมาชิก 001';
+            const fineData = currentOverdueFines[mockBorrowerId];
+            
+            const fineElement = document.getElementById('fine-amount');
+            const overdueAlert = document.querySelector('.p-4.bg-red-100');
+            
+            if (fineData && fineData.totalFine > 0) {
+                fineElement.textContent = `${fineData.totalFine.toFixed(2)} บาท (${fineData.books[0].days} วัน x ${FINE_PER_DAY} บาท)`;
+                overdueAlert.classList.remove('hidden');
+            } else {
+                fineElement.textContent = `0.00 บาท`;
+                // Hide overdue warning if no fine exists
+                overdueAlert.classList.add('hidden');
+            }
+        }
+        
+        // --- Data Seeding and Utility Functions remain the same ---
+        async function seedInitialDataIfEmpty() {
+            if (Object.keys(currentBookData).length === 0) {
+                console.log("Seeding initial data...");
+                const initialBooks = {
+                    'R2024001': { title: 'การจัดการฐานข้อมูลขั้นสูง', location: 'ชั้น A2 / 01', status: 'onshelf', borrower: null, dateDue: null },
+                    'R2024002': { title: 'โลกของควอนตัมฟิสิกส์', location: 'ยืมออก', status: 'borrowed', borrower: 'USER005', dateDue: '22 พ.ย. 2568' },
+                    'R2024003': { title: 'การทำอาหารเพื่อสุขภาพ', location: 'ชั้น A3 / 02', status: 'onshelf', borrower: null, dateDue: null },
+                    'R2024004': { title: 'คู่มือการเขียนโปรแกรม Python', location: 'ชั้น A5 / 12', status: 'onshelf', borrower: null, dateDue: null },
+                    'R2024005': { title: 'กลยุทธ์การลงทุนยุคใหม่', location: 'ยืมออก', status: 'borrowed', borrower: 'สมาชิก 001', dateDue: '18 พ.ย. 2568' }, // Overdue
+                    'R2024006': { title: 'เทคนิคการบริหารเวลาขั้นเทพ', location: 'ชั้น B1 / 03', status: 'onshelf', borrower: null, dateDue: null }
+                };
+                
+                // Only seed if actually empty (to prevent overwriting if another client is fast)
+                if (Object.keys(currentBookData).length === 0) {
+                     for (const rfid in initialBooks) {
+                        const docRef = doc(db, `artifacts/${appId}/public/data/books`, rfid);
+                        await setDoc(docRef, initialBooks[rfid]).catch(err => console.error("Error seeding data:", err));
+                    }
+                }
+            }
+        }
+
+        function generateNextRfid() {
+            let maxNum = 0;
+            const prefix = 'R2024';
+            
+            for (const rfid in currentBookData) {
+                if (rfid.startsWith(prefix) && rfid.length >= prefix.length) {
+                    const numPartStr = rfid.substring(prefix.length);
+                    const numPart = parseInt(numPartStr, 10);
+                    
+                    if (!isNaN(numPart) && numPart > maxNum) {
+                        maxNum = numPart;
+                    }
+                }
+            }
+            
+            const nextNum = maxNum + 1;
+            // Pad to ensure 3 digits (e.g., 6 -> '006')
+            const paddedNum = String(nextNum).padStart(3, '0'); 
+            
+            return prefix + paddedNum;
+        }
+
+        function populateNextRfid() {
+            const rfidInput = document.getElementById('new-rfid-input');
+            if (rfidInput && Object.keys(currentBookData).length > 0) {
+                rfidInput.value = generateNextRfid();
+            }
+        }
+
+
+        /**
+         * Generates the HTML for the book status table (used for real-time tracking).
+         */
+        function generateStatusTableHTML(data, isLibrarianMode = false) {
+            let html = `
+                <div class="grid grid-cols-12 gap-2 font-bold text-sm text-gray-600 border-b pb-2 mb-2">
+                    <div class="col-span-4">ชื่อหนังสือ</div>
+                    <div class="col-span-2">รหัส RFID</div>
+                    <div class="col-span-3">สถานะปัจจุบัน</div>
+                    <div class="col-span-2">ตำแหน่ง</div>
+                    ${isLibrarianMode ? `<div class="col-span-1 text-center">จัดการ</div>` : ''}
+                </div>
+            `;
+            
+            // Sort by RFID for consistent display
+            const sortedRfids = Object.keys(data).sort(); 
+            
+            if (sortedRfids.length === 0) {
+                return `<p class="text-center text-gray-500 p-4">ไม่พบหนังสือที่ตรงกับการค้นหา หรือยังไม่มีหนังสือในระบบ</p>`;
+            }
+
+            const colSpanBook = isLibrarianMode ? 3 : 4;
+
+            sortedRfids.forEach(rfid => {
+                const book = data[rfid];
+                let statusText;
+                let statusClasses;
+                let locationText;
+
+                switch (book.status) {
+                    case 'onshelf':
+                    case 'shelving': // Treat 'shelving' as 'onshelf' for display purposes
+                        statusText = '✓ บนชั้นหนังสือ';
+                        statusClasses = 'bg-green-100 text-green-800';
+                        locationText = book.location;
+                        break;
+                    case 'borrowed':
+                        statusText = `ยืมออก (โดย: ${book.borrower})`;
+                        statusClasses = 'bg-red-100 text-red-800';
+                        locationText = 'ยืมออก';
+                        break;
+                    default:
+                        statusText = 'สถานะไม่ทราบ';
+                        statusClasses = 'bg-gray-100 text-gray-800';
+                        locationText = 'ไม่ทราบ';
+                }
+                
+                // Add Delete button only in Librarian Tracking Mode
+                let actionButtons = '';
+                if (isLibrarianMode) {
+                    actionButtons = `
+                        <div class="col-span-1 text-center flex gap-1 justify-center">
+                            <button onclick="openEditBookModal('${rfid}')" class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-1 px-2 rounded-lg shadow-md">แก้ไข</button>
+                            <button onclick="confirmDelete('${rfid}', '${book.title}')" class="text-xs bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded-lg shadow-md">ลบ</button>
+                        </div>
+                    `;
+                }
+
+
+                html += `
+                    <div id="book-${rfid}" class="grid grid-cols-12 gap-2 py-2 border-b text-sm items-center">
+                        <div class="col-span-${colSpanBook}">${book.title}</div>
+                        <div class="col-span-2 text-gray-500">${rfid}</div>
+                        <div class="col-span-3">
+                            <span id="status-${rfid}" class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${statusClasses}">
+                                ${statusText}
+                            </span>
+                        </div>
+                        <div class="col-span-2 text-gray-500">${locationText}</div>
+                        ${actionButtons}
+                    </div>
+                `;
+            });
+            html += `<p class="mt-4 text-xs text-gray-500">* ข้อมูลจากฐานข้อมูล Firestore</p>`;
+            return html;
+        }
+
+        /**
+         * Filters book data based on search term and updates the respective tables.
+         */
+        function filterBooks(searchTerm, tableId) {
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+            const filteredData = {};
+            const isLibrarianMode = tableId === 'tracking-table-container';
+            
+            if (lowerCaseSearchTerm.length === 0) {
+                Object.assign(filteredData, currentBookData); 
+            } else {
+                for (const rfid in currentBookData) {
+                    const book = currentBookData[rfid];
+                    const searchString = (book.title + rfid + book.location + (book.borrower || '')).toLowerCase();
+                    
+                    if (searchString.includes(lowerCaseSearchTerm)) {
+                        filteredData[rfid] = book;
+                    }
+                }
+            }
+            
+            document.getElementById(tableId).innerHTML = generateStatusTableHTML(filteredData, isLibrarianMode);
+        }
+
+        /**
+         * Generates and renders the HTML for the Borrower's Personal History table.
+         */
+        function renderBorrowerHistory() {
+            const historyContainer = document.getElementById('borrower-history-content');
+            let historyHTML = ``;
+
+            mockHistoryData.forEach(item => {
+                let statusText;
+                let statusClass;
+                let dateReturnedText;
+                let dateReturnedClass = 'text-gray-500';
+                let isOverdue = item.dateDue === '18 พ.ย. 2568' && !item.dateReturned; // Mock overdue logic
+
+                if (item.status === 'borrowing') {
+                    statusText = 'ยืมอยู่';
+                    statusClass = 'text-red-500';
+                    dateReturnedText = item.dateDue;
+                    if (isOverdue) {
+                         dateReturnedText += ' (เลยกำหนด)';
+                         dateReturnedClass = 'text-red-600 font-semibold';
+                    }
+                } else { // status === 'returned'
+                    statusText = 'คืนแล้ว';
+                    statusClass = 'text-green-500';
+                    dateReturnedText = item.dateReturned;
+                }
+
+                historyHTML += `
+                    <div class="grid grid-cols-12 gap-2 py-2 border-b text-sm items-center">
+                        <div class="col-span-4">${item.title}</div>
+                        <div class="col-span-2 text-gray-500">${item.rfid}</div>
+                        <div class="col-span-2 text-gray-500">${item.dateBorrowed}</div>
+                        <div class="col-span-3 ${dateReturnedClass}">${dateReturnedText}</div>
+                        <div class="col-span-1">
+                            <span class="${statusClass}">
+                                ${statusText}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyContainer.innerHTML = historyHTML;
+        }
+        
+        /**
+         * Renders the borrower list table.
+         */
+        function renderBorrowerList(data) {
+            const container = document.getElementById('borrower-list-container');
+            let html = `
+                <div class="grid grid-cols-12 gap-2 font-bold text-sm text-gray-600 border-b pb-2 mb-2">
+                    <div class="col-span-4">รหัสสมาชิก</div>
+                    <div class="col-span-8">ชื่อสมาชิก</div>
+                </div>
+            `;
+
+            const sortedIds = Object.keys(data).sort(); 
+            
+            if (sortedIds.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 p-4">ไม่พบรายชื่อสมาชิก</p>`;
+                return;
+            }
+
+            sortedIds.forEach(id => {
+                const borrower = data[id];
+                html += `
+                    <div class="grid grid-cols-12 gap-2 py-2 border-b text-sm items-center">
+                        <div class="col-span-4 font-semibold text-blue-600">${id}</div>
+                        <div class="col-span-8">${borrower.name}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        /**
+         * Filters the mockBorrowerData and updates the borrower list table.
+         */
+        function filterBorrowerList(searchTerm) {
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+            const filteredData = {};
+            
+            if (lowerCaseSearchTerm.length === 0) {
+                Object.assign(filteredData, mockBorrowerData); 
+            } else {
+                for (const id in mockBorrowerData) {
+                    const borrower = mockBorrowerData[id];
+                    const searchString = (id + borrower.name).toLowerCase();
+                    
+                    if (searchString.includes(lowerCaseSearchTerm)) {
+                        filteredData[id] = borrower;
+                    }
+                }
+            }
+            
+            renderBorrowerList(filteredData);
+        }
+
+        /**
+         * Function to initialize and update the status tables in both views.
+         */
+        function updateStatusTables() {
+            // Borrower Status Table
+            document.getElementById('status-table-container').innerHTML = generateStatusTableHTML(currentBookData, false);
+            // Librarian Tracking Table
+            document.getElementById('tracking-table-container').innerHTML = generateStatusTableHTML(currentBookData, true);
+        }
+        
+        // --- Delete Confirmation and Action ---
+
+        /**
+         * Shows a modal to confirm book deletion.
+         * @param {string} rfid - The RFID of the book to delete.
+         * @param {string} title - The title of the book.
+         */
+        window.confirmDelete = function(rfid, title) {
+            const modal = document.getElementById('custom-modal');
+            const msgElement = document.getElementById('modal-message');
+            const closeBtn = document.getElementById('modal-close-btn');
+
+            msgElement.innerHTML = `<p class="mb-4">คุณต้องการลบหนังสือ: <span class="font-bold text-red-600">${title} (RFID: ${rfid})</span> ออกจากระบบอย่างถาวรหรือไม่?</p>`;
+            
+            // Change button to confirm delete action
+            closeBtn.textContent = 'ยืนยันการลบ';
+            closeBtn.classList.remove('bg-blue-600');
+            closeBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            
+            // Temporarily replace the click handler with the delete function
+            closeBtn.onclick = function() {
+                handleDeleteBook(rfid, title);
+                closeModal();
+            };
+
+            modal.style.display = 'block';
+        }
+        
+        /**
+         * Handles the final deletion of the book from Firestore.
+         * @param {string} rfid - The RFID of the book to delete.
+         * @param {string} title - The title of the book.
+         */
+        async function handleDeleteBook(rfid, title) {
+            if (!db) { showModal('การเชื่อมต่อฐานข้อมูลล้มเหลว', 'error'); return; }
+
+            // Prevent deletion if book is currently borrowed (optional logic, but good practice)
+            if (currentBookData[rfid] && currentBookData[rfid].status === 'borrowed') {
+                 showModal(`ไม่สามารถลบหนังสือ "${title}" ได้ เนื่องจากหนังสือยังถูกยืมอยู่โดย ${currentBookData[rfid].borrower}`, 'error');
+                 return;
+            }
+
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/books`, rfid);
+                await deleteDoc(docRef);
+                
+                showModal(`หนังสือ "${title}" (RFID: ${rfid}) ถูกลบออกจากระบบสำเร็จ!`, 'success');
+
+                // The UI is automatically updated by the onSnapshot listener, but we reset the modal button state
+                resetModalButton();
+
+            } catch (error) {
+                console.error("Error deleting book:", error);
+                showModal(`เกิดข้อผิดพลาดในการลบ: ${error.message}`, 'error');
+                resetModalButton();
+            }
+        }
+
+        /**
+         * Resets the modal button to its default state after an action.
+         */
+        function resetModalButton() {
+            const closeBtn = document.getElementById('modal-close-btn');
+            closeBtn.textContent = 'ตกลง';
+            closeBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            closeBtn.classList.add('bg-blue-600');
+            closeBtn.onclick = closeModal; // Re-assign the default close function
+        }
+
+        // --- Editing Functions (Librarian) ---
+        
+        /**
+         * Opens the modal for editing a specific book.
+         */
+        window.openEditBookModal = function(rfid) {
+            const book = currentBookData[rfid];
+            if (!book) return;
+
+            document.getElementById('edit-book-rfid-display').textContent = rfid;
+            document.getElementById('edit-original-rfid').value = rfid;
+            document.getElementById('edit-title').value = book.title;
+            document.getElementById('edit-location').value = book.location;
+            
+            const statusDisplay = document.getElementById('edit-status-display');
+            if (book.status === 'borrowed') {
+                statusDisplay.textContent = `ถูกยืมโดย ${book.borrower}`;
+                statusDisplay.classList.add('text-red-600');
+            } else {
+                statusDisplay.textContent = 'บนชั้นหนังสือ';
+                statusDisplay.classList.remove('text-red-600');
+            }
+
+            document.getElementById('edit-book-modal').style.display = 'block';
+        }
+
+        /**
+         * Closes the book editing modal.
+         */
+        window.closeEditBookModal = function() {
+            document.getElementById('edit-book-modal').style.display = 'none';
+        }
+
+        /**
+         * Handles saving the edited book data to Firestore.
+         */
+        async function handleSaveEdit() {
+            if (!db) { showModal('การเชื่อมต่อฐานข้อมูลล้มเหลว', 'error'); return; }
+
+            const originalRfid = document.getElementById('edit-original-rfid').value;
+            const newTitle = document.getElementById('edit-title').value.trim();
+            const newLocation = document.getElementById('edit-location').value.trim();
+            
+            const book = currentBookData[originalRfid];
+
+            if (!newTitle || !newLocation) {
+                showModal('กรุณากรอกข้อมูลชื่อหนังสือและตำแหน่งให้ครบถ้วน', 'error');
+                return;
+            }
+            
+            try {
+                 // Check if the book is currently borrowed
+                if (book.status === 'borrowed') {
+                    showModal('ไม่สามารถแก้ไขหนังสือที่ถูกยืมออกอยู่ได้ กรุณาคืนหนังสือก่อนดำเนินการ', 'error');
+                    return;
+                }
+
+                const docRef = doc(db, `artifacts/${appId}/public/data/books`, originalRfid);
+                
+                await updateDoc(docRef, {
+                    title: newTitle,
+                    location: newLocation
+                });
+
+                showModal(`บันทึกการแก้ไขหนังสือ "${newTitle}" สำเร็จ!`, 'success');
+                closeEditBookModal();
+            } catch (error) {
+                console.error("Error saving book edit:", error);
+                showModal(`เกิดข้อผิดพลาดในการบันทึกการแก้ไข: ${error.message}`, 'error');
+            }
+        }
+
+        // --- Fine Management Logic ---
+        
+        /**
+         * Renders the fine details for the specified borrower.
+         */
+        function renderFineDetails(borrowerId) {
+            const output = document.getElementById('fine-details-output');
+            const fineData = currentOverdueFines[borrowerId];
+            
+            document.getElementById('fine-borrower-name').textContent = mockBorrowerData[borrowerId] ? mockBorrowerData[borrowerId].name : 'ไม่พบชื่อ';
+            
+            if (fineData && fineData.totalFine > 0) {
+                document.getElementById('current-fine-total').textContent = `${fineData.totalFine.toFixed(2)} บาท`;
+                document.getElementById('fine-status').textContent = 'ค้างชำระ';
+                document.getElementById('fine-status').classList.add('text-red-600');
+                document.getElementById('fine-status').classList.remove('text-green-600');
+                document.getElementById('pay-fine-btn').disabled = false;
+                output.classList.remove('hidden');
+            } else {
+                document.getElementById('current-fine-total').textContent = `0.00 บาท`;
+                document.getElementById('fine-status').textContent = 'ไม่มีค่าปรับค้างชำระ';
+                document.getElementById('fine-status').classList.remove('text-red-600');
+                document.getElementById('fine-status').classList.add('text-green-600');
+                document.getElementById('pay-fine-btn').disabled = true;
+                output.classList.remove('hidden');
+            }
+        }
+        
+        /**
+         * Handles the 'Check Fine' button click (Librarian).
+         */
+        function handleCheckFine() {
+            const borrowerId = document.getElementById('fine-borrower-input').value.trim().toUpperCase();
+            document.getElementById('fine-details-output').classList.add('hidden');
+
+            if (!borrowerId) {
+                showModal('กรุณาป้อนรหัสสมาชิก', 'error');
+                return;
+            }
+            if (!mockBorrowerData[borrowerId]) {
+                 showModal(`ไม่พบรหัสสมาชิก ${borrowerId} ในระบบ`, 'error');
+                 return;
+            }
+            
+            renderFineDetails(borrowerId);
+        }
+
+        /**
+         * Handles the 'Record Fine Payment' button click (Librarian).
+         */
+        async function handleRecordFinePayment() {
+            // NOTE: In a real app, this would involve updating the History collection or a dedicated Fines collection.
+            // Since mockHistoryData is local, we simulate the effect by clearing the fine status.
+            
+            const borrowerId = document.getElementById('fine-borrower-input').value.trim().toUpperCase();
+            
+            if (currentOverdueFines[borrowerId]) {
+                const books = currentOverdueFines[borrowerId].books;
+                
+                // For demonstration, we simulate payment by clearing the mock overdue status for a specific book
+                if (borrowerId === 'สมาชิก 001') {
+                    const historyItem = mockHistoryData.find(item => item.rfid === 'R2024005');
+                    if (historyItem) {
+                        historyItem.dateDue = '10 พ.ย. 2568 (Paid)'; // Mock indication of payment
+                    }
+                }
+                
+                // Clear the local state (currentOverdueFines) and re-render
+                delete currentOverdueFines[borrowerId];
+                updateBorrowerFineDisplay();
+                renderFineDetails(borrowerId); 
+
+                showModal(`บันทึกการชำระค่าปรับ ${books.length} รายการ ของ ${mockBorrowerData[borrowerId].name} สำเร็จ!`, 'success');
+
+            } else {
+                showModal('ไม่พบค่าปรับค้างชำระสำหรับสมาชิกนี้', 'error');
+            }
+        }
+
+
+        // --- UI Control Functions (showModal, showTab, etc.) ---
+        
+        function showModal(message, type = 'success') {
+            const modal = document.getElementById('custom-modal');
+            const msgElement = document.getElementById('modal-message');
+            msgElement.textContent = message;
+            
+            resetModalButton(); // Ensure the button is reset before showing the standard message
+
+            if (type === 'error') {
+                msgElement.classList.add('text-red-600');
+                msgElement.classList.remove('text-green-600');
+            } else {
+                msgElement.classList.add('text-green-600');
+                msgElement.classList.remove('text-red-600');
+            }
+
+            modal.style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+        }
+
+        function showEmailPreviewModal() {
+            document.getElementById('email-preview-modal').style.display = 'block';
+        }
+
+        function closeEmailPreviewModal() {
+            document.getElementById('email-preview-modal').style.display = 'none';
+        }
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            if (tabName === 'borrower-history') {
+                renderBorrowerHistory();
+            } else if (tabName === 'librarian-add') {
+                populateNextRfid(); 
+            } else if (tabName === 'librarian-borrowers') { 
+                renderBorrowerList(mockBorrowerData);
+            }
+            if (tabName === 'borrower-status' || tabName === 'librarian-tracking') {
+                updateStatusTables(); 
+                // Clear search inputs when the tab is opened
+                document.getElementById('borrower-search-input').value = '';
+                document.getElementById('librarian-search-input').value = '';
+            }
+             // Clear fine details when switching away from the fines tab
+            if (tabName !== 'librarian-fines') {
+                 document.getElementById('fine-details-output').classList.add('hidden');
+                 document.getElementById('fine-borrower-input').value = '';
+            }
+        }
+
+        function switchUserRole(role) {
+            currentRole = role;
+            const borrowerTabs = document.getElementById('borrower-tabs');
+            const librarianTabs = document.getElementById('librarian-tabs');
+            
+            borrowerTabs.classList.add('hidden');
+            librarianTabs.classList.add('hidden');
+
+            let defaultTab;
+
+            if (role === 'librarian') {
+                librarianTabs.classList.remove('hidden');
+                defaultTab = 'librarian-management';
+            } else {
+                borrowerTabs.classList.remove('hidden');
+                defaultTab = 'borrower-status';
+            }
+
+            const activeTabSet = document.getElementById(`${role}-tabs`);
+            const firstTabLink = activeTabSet.querySelector('.tab-button');
+            if (firstTabLink) {
+                showTab(firstTabLink.dataset.tab);
+            }
+        }
+
+        // --- Firestore Interaction Functions ---
+
+        async function handleBorrow() {
+            if (!db) { showModal('การเชื่อมต่อฐานข้อมูลล้มเหลว', 'error'); return; }
+            
+            const rfidInput = document.getElementById('rfid-input');
+            const borrowerIdInput = document.getElementById('borrower-id-input');
+            
+            const rfid = rfidInput.value.trim().toUpperCase();
+            const borrowerId = borrowerIdInput.value.trim();
+
+            if (!rfid || !borrowerId) {
+                showModal('กรุณาสแกนรหัสหนังสือและป้อนรหัสสมาชิกผู้ยืม', 'error');
+                return;
+            }
+            
+            if (!currentBookData[rfid]) {
+                showModal(`ไม่พบรหัสหนังสือ ${rfid} ในระบบ`, 'error');
+                return;
+            }
+
+            if (currentBookData[rfid].status === 'borrowed') {
+                 showModal(`หนังสือ "${currentBookData[rfid].title}" ถูกยืมออกไปแล้ว!`, 'error');
+                 return;
+            }
+            
+            if (!mockBorrowerData[borrowerId]) { 
+                 showModal(`ไม่พบรหัสสมาชิกผู้ยืม ${borrowerId} ในระบบ`, 'error');
+                 return;
+            }
+
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/books`, rfid);
+                await updateDoc(docRef, {
+                    status: 'borrowed',
+                    borrower: borrowerId, 
+                    location: 'ยืมออก'
+                });
+                
+                // --- Mock Borrower History Update (Local only) ---
+                if (borrowerId === 'สมาชิก 001') { 
+                     // Check if an existing entry needs status change (if they borrowed, returned, and re-borrowed)
+                     let existingEntry = mockHistoryData.find(item => item.rfid === rfid && item.status === 'borrowing');
+                     if (!existingEntry) {
+                         mockHistoryData.push({ 
+                            title: currentBookData[rfid].title, 
+                            rfid: rfid, 
+                            dateBorrowed: '20 พ.ย. 2568', 
+                            dateDue: '27 พ.ย. 2568', 
+                            dateReturned: null, 
+                            status: 'borrowing' 
+                         });
+                     }
+                }
+                
+                showModal(`ทำการบันทึก "การยืม" หนังสือ "${currentBookData[rfid].title}" ให้กับ ${borrowerId} สำเร็จ!`, 'success');
+                rfidInput.value = ''; 
+                borrowerIdInput.value = ''; 
+            } catch (error) {
+                console.error("Error updating borrow status:", error);
+                showModal(`เกิดข้อผิดพลาดในการบันทึกการยืม: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleReturn() {
+            if (!db) { showModal('การเชื่อมต่อฐานข้อมูลล้มเหลว', 'error'); return; }
+            
+            const rfidInput = document.getElementById('rfid-input');
+            const rfid = rfidInput.value.trim().toUpperCase();
+
+            if (!rfid) {
+                showModal('กรุณาสแกนหรือป้อนรหัส RFID/บาร์โค้ดหนังสือ', 'error');
+                return;
+            }
+
+            if (!currentBookData[rfid]) {
+                showModal(`ไม่พบรหัสหนังสือ ${rfid} ในระบบ`, 'error');
+                return;
+            }
+
+            if (currentBookData[rfid].status !== 'borrowed') {
+                 showModal(`หนังสือ "${currentBookData[rfid].title}" ไม่ได้ถูกยืมออกไป!`, 'error');
+                 return;
+            }
+            
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/books`, rfid);
+                const originalLocation = currentBookData[rfid].location; // Get original shelf location
+                
+                // *** Change status directly to 'onshelf' and restore original location ***
+                await updateDoc(docRef, {
+                    status: 'onshelf', // เปลี่ยนเป็น 'onshelf' ทันที
+                    borrower: null,
+                    location: originalLocation // Set location back to the shelf location
+                });
+
+                // --- Mock Borrower History Update (Local only) ---
+                const historyItem = mockHistoryData.find(item => item.rfid === rfid && item.status === 'borrowing');
+                if (historyItem) {
+                    historyItem.status = 'returned';
+                    historyItem.dateReturned = '20 พ.ย. 2568'; 
+                    renderBorrowerHistory(); // Rerender borrower history immediately
+                }
+
+                showModal(`ทำการบันทึก "การคืน" หนังสือ "${currentBookData[rfid].title}" สำเร็จ! สถานะ: บนชั้นหนังสือ`, 'success');
+                rfidInput.value = ''; 
+                document.getElementById('borrower-id-input').value = ''; // Clear borrower input
+            } catch (error) {
+                console.error("Error updating return status:", error);
+                showModal(`เกิดข้อผิดพลาดในการบันทึกการคืน: ${error.message}`, 'error');
+            }
+        }
+        
+        async function handleAddNewBook() {
+            if (!db) { showModal('การเชื่อมต่อฐานข้อมูลล้มเหลว', 'error'); return; }
+            
+            const title = document.getElementById('new-title-input').value.trim();
+            const rfid = document.getElementById('new-rfid-input').value.trim().toUpperCase();
+            const location = document.getElementById('new-location-input').value.trim();
+
+            if (!title || !rfid || !location) {
+                showModal('กรุณากรอกข้อมูลให้ครบถ้วน: ชื่อหนังสือ, รหัส RFID, และตำแหน่ง', 'error');
+                return;
+            }
+
+            if (currentBookData[rfid]) {
+                showModal(`รหัส RFID/บาร์โค้ด ${rfid} มีอยู่ในระบบแล้ว`, 'error');
+                return;
+            }
+            
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/books`, rfid);
+                
+                await setDoc(docRef, { 
+                    title: title, 
+                    location: location, 
+                    status: 'onshelf', 
+                    borrower: null 
+                });
+                
+                // The UI (tables, next RFID) will automatically update via the onSnapshot listener
+
+                // 3. Clear inputs and populate with the next suggested RFID
+                document.getElementById('new-title-input').value = '';
+                document.getElementById('new-location-input').value = '';
+                populateNextRfid(); 
+                
+                showModal(`บันทึกหนังสือ "${title}" (RFID: ${rfid}) เข้าสู่ระบบสำเร็จ!`, 'success');
+
+            } catch (error) {
+                console.error("Error adding new book:", error);
+                showModal(`เกิดข้อผิดพลาดในการบันทึก: ${error.message}`, 'error');
+            }
+        }
+
+
+        // เริ่มต้นการทำงานของ Prototype
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            
+            // ผูก Event Listener กับการนำทางแท็บ
+            document.querySelectorAll('.tab-button').forEach(tabElement => {
+                tabElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showTab(e.target.dataset.tab);
+                });
+            });
+
+            // ผูก Event Listener สำหรับ Role Selector
+            document.getElementById('user-role-selector').addEventListener('change', (e) => {
+                switchUserRole(e.target.value);
+            });
+
+            // ผูก Event Listener สำหรับปุ่มยืม-คืน (เฉพาะในโหมด Librarian)
+            document.getElementById('borrow-btn').addEventListener('click', handleBorrow);
+            document.getElementById('return-btn').addEventListener('click', handleReturn);
+            
+            // ผูก Event Listener สำหรับปุ่มเพิ่มหนังสือใหม่
+            document.getElementById('add-new-book-btn').addEventListener('click', handleAddNewBook);
+
+            // ผูก Event Listener สำหรับปุ่มดูตัวอย่างอีเมล
+            document.getElementById('preview-email-btn').addEventListener('click', showEmailPreviewModal);
+
+            // ผูก Event Listener สำหรับ Modal ปิด
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+            window.addEventListener('click', (event) => {
+                // Ensure resetModalButton is called if the modal is closed via window click/escape (handled inside resetModalButton via closeModal)
+                if (event.target === document.getElementById('custom-modal')) {
+                    closeModal();
+                }
+                if (event.target === document.getElementById('email-preview-modal')) {
+                    closeEmailPreviewModal();
+                }
+                if (event.target === document.getElementById('edit-book-modal')) {
+                    closeEditBookModal();
+                }
+            });
+            
+            resetModalButton(); // Reset the modal button initially in case the user opens the modal using the confirmation button
+
+            // Edit Button (Save)
+            document.getElementById('save-edit-btn').addEventListener('click', handleSaveEdit);
+            
+            // Fine Management Buttons
+            document.getElementById('check-fine-btn').addEventListener('click', handleCheckFine);
+            document.getElementById('pay-fine-btn').addEventListener('click', handleRecordFinePayment);
+
+
+            // Real-time search listeners
+            const borrowerSearchInput = document.getElementById('borrower-search-input');
+            borrowerSearchInput.addEventListener('input', (e) => {
+                filterBooks(e.target.value, 'status-table-container');
+            });
+            document.getElementById('borrower-search-btn').addEventListener('click', () => {
+                filterBooks(borrowerSearchInput.value, 'status-table-container');
+            });
+
+
+            const librarianSearchInput = document.getElementById('librarian-search-input');
+            librarianSearchInput.addEventListener('input', (e) => {
+                filterBooks(e.target.value, 'tracking-table-container');
+            });
+            document.getElementById('librarian-search-btn').addEventListener('click', () => {
+                filterBooks(librarianSearchInput.value, 'tracking-table-container');
+            });
+            
+            const borrowerListSearchInput = document.getElementById('borrower-list-search-input');
+            borrowerListSearchInput.addEventListener('input', (e) => {
+                filterBorrowerList(e.target.value);
+            });
+            document.getElementById('borrower-list-search-btn').addEventListener('click', () => {
+                filterBorrowerList(borrowerListSearchInput.value);
+            });
+
+            // กำหนดบทบาทเริ่มต้นเป็น "ผู้ยืม"
+            switchUserRole(currentRole);
+        });
+    </script>
+</body>
+</html>
