@@ -8,19 +8,60 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600;700&display=swap');
+        
+        /* Enhanced Body Background */
         body {
             font-family: 'Noto Sans Thai', 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Light background */
+            background-color: #fff7ed; /* Fallback color */
+            /* Dot Pattern Background */
+            background-image: 
+                radial-gradient(#fed7aa 1px, transparent 1px), 
+                radial-gradient(#fed7aa 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            /* Soft gradient overlay */
+            background: 
+                linear-gradient(135deg, rgba(255,247,237,0.9) 0%, rgba(255,255,255,0.6) 100%),
+                radial-gradient(#fed7aa 1px, transparent 1px), 
+                radial-gradient(#fed7aa 1px, transparent 1px);
+            background-size: auto, 20px 20px, 20px 20px;
+            background-position: center, 0 0, 10px 10px;
+            min-height: 100vh;
         }
+
+        /* Glass effect container */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
         .tab-button.active {
-            border-bottom: 3px solid #3b82f6; /* Blue border for active tab */
-            color: #1e40af; /* Darker blue text */
-            font-weight: 600;
+            border-bottom: 3px solid #f97316; /* Orange-500 border */
+            color: #c2410c; /* Orange-700 text */
+            font-weight: 700;
+            background-color: rgba(255, 247, 237, 0.5);
+        }
+        .tab-button:hover {
+            color: #ea580c; /* Orange-600 hover text */
+            background-color: rgba(255, 247, 237, 0.3);
         }
         .scroll-list {
-            max-height: 400px;
+            max-height: 600px;
             overflow-y: auto;
         }
+        /* Custom scrollbar */
+        .scroll-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scroll-list::-webkit-scrollbar-thumb {
+            background-color: #fed7aa;
+            border-radius: 4px;
+        }
+        .scroll-list::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
         /* Custom modal styles */
         .modal {
             display: none;
@@ -31,86 +72,96 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-            backdrop-filter: blur(5px);
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
         }
         .modal-content {
-            background-color: #fefefe;
+            background-color: #fff;
             margin: 15% auto;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 16px;
             width: 80%;
             max-width: 400px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             animation: fadeIn 0.3s;
         }
-        .email-modal-content, .edit-modal-content { /* Added .edit-modal-content */
-            background-color: #fefefe;
-            margin: 5% auto; /* Adjusted margin for larger form */
+        .email-modal-content, .edit-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
             padding: 30px;
-            border-radius: 8px;
+            border-radius: 16px;
             width: 90%;
             max-width: 600px; 
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             animation: fadeIn 0.3s;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
+            from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen">
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
 
-    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-xl p-6 md:p-10">
-        <header class="mb-8 border-b pb-4">
-            <h1 class="text-3xl font-bold text-gray-800">ระบบห้องสมุด "ความรู้รอบโลก"</h1>
-            <p class="text-lg text-blue-600 font-medium">Prototype: การจัดการสถานะหนังสือและการแจ้งเตือนอัตโนมัติ</p>
-            <div class="mt-2 text-sm text-gray-500 flex justify-between items-center">
-                <span>สถานะผู้ใช้: <span id="user-id-display">กำลังเชื่อมต่อ...</span> | วันที่: 20 พ.ย. 2568</span>
-                
-                <!-- NEW: Role Selector -->
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs font-semibold text-gray-700">เปลี่ยนบทบาท:</span>
-                    <select id="user-role-selector" class="p-1 border border-gray-300 rounded-lg text-sm bg-white focus:ring-blue-500 focus:border-blue-500">
-                        <option value="borrower">ผู้ยืม (Borrower)</option>
-                        <option value="librarian">บรรณารักษ์ (Librarian)</option>
-                    </select>
+    <div class="w-full max-w-6xl glass-effect shadow-2xl rounded-3xl p-6 md:p-10 border-t-8 border-orange-500 relative overflow-hidden">
+        <!-- Decorative background circle -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-orange-100 opacity-50 blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-yellow-100 opacity-50 blur-3xl pointer-events-none"></div>
+
+        <header class="mb-8 border-b border-gray-100 pb-4 relative z-10">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 tracking-tight">ระบบห้องสมุด <span class="text-orange-600">"ความรู้รอบโลก"</span></h1>
+                    <p class="text-lg text-gray-500 font-medium mt-1">Prototype: การจัดการสถานะหนังสือและการแจ้งเตือนอัตโนมัติ</p>
+                </div>
+                <div class="mt-4 md:mt-0 text-right">
+                    <div class="flex items-center justify-end space-x-3">
+                         <div class="text-sm text-gray-500">
+                            <p>สถานะ: <span id="user-id-display" class="font-semibold text-orange-600">กำลังเชื่อมต่อ...</span></p>
+                            <p class="text-xs opacity-75">วันที่: 20 พ.ย. 2568</p>
+                        </div>
+                         <div class="bg-orange-50 p-1 rounded-lg border border-orange-100">
+                            <select id="user-role-selector" class="p-2 rounded-md text-sm bg-transparent font-semibold text-orange-700 focus:outline-none cursor-pointer">
+                                <option value="borrower">ผู้ยืม (Borrower)</option>
+                                <option value="librarian">บรรณารักษ์ (Librarian)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Tab Navigation Area -->
-        <div class="flex border-b border-gray-200 mb-6">
+        <div class="flex border-b border-gray-200 mb-8 overflow-x-auto relative z-10">
             <!-- Borrower Tabs -->
-            <div id="borrower-tabs" class="flex w-full">
-                <a href="#" data-tab="borrower-status" class="tab-button active py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    1. ค้นหาสถานะหนังสือ (Search & Status)
+            <div id="borrower-tabs" class="flex w-full min-w-max">
+                <a href="#" data-tab="borrower-status" class="tab-button active py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    1. ค้นหาสถานะหนังสือ
                 </a>
-                <a href="#" data-tab="borrower-history" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    2. ประวัติการยืมส่วนตัว (Personal History)
+                <a href="#" data-tab="borrower-history" class="tab-button py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    2. ประวัติการยืมส่วนตัว
                 </a>
-                <a href="#" data-tab="borrower-alerts" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    3. การแจ้งเตือนอัตโนมัติ (Automated Alerts)
+                <a href="#" data-tab="borrower-alerts" class="tab-button py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    3. การแจ้งเตือนอัตโนมัติ
                 </a>
             </div>
             
             <!-- Librarian Tabs (Initially Hidden) -->
-            <div id="librarian-tabs" class="hidden flex w-full">
-                <a href="#" data-tab="librarian-management" class="tab-button active py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    1. การจัดการยืม-คืน (Borrow/Return Management)
+            <div id="librarian-tabs" class="hidden flex w-full min-w-max">
+                <a href="#" data-tab="librarian-management" class="tab-button active py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    1. การจัดการยืม-คืน
                 </a>
-                <a href="#" data-tab="librarian-tracking" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    2. สถานะหนังสือทั้งหมด (Tracking)
+                <a href="#" data-tab="librarian-tracking" class="tab-button py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    2. สถานะหนังสือทั้งหมด
                 </a>
-                <a href="#" data-tab="librarian-add" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    3. เพิ่มหนังสือใหม่ (Add New Book)
+                <a href="#" data-tab="librarian-add" class="tab-button py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    3. เพิ่มหนังสือใหม่
                 </a>
-                <a href="#" data-tab="librarian-borrowers" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    4. รายชื่อสมาชิก (Borrower List)
+                <a href="#" data-tab="librarian-borrowers" class="tab-button py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    4. รายชื่อสมาชิก
                 </a>
-                <a href="#" data-tab="librarian-fines" class="tab-button py-3 px-4 text-center text-gray-600 transition duration-150 ease-in-out hover:text-blue-500">
-                    5. จัดการค่าปรับ (Fines Management)
+                <a href="#" data-tab="librarian-fines" class="tab-button py-4 px-6 text-center text-gray-600 transition duration-200 ease-in-out rounded-t-lg mx-1">
+                    5. จัดการค่าปรับ
                 </a>
             </div>
         </div>
@@ -121,74 +172,99 @@
         <!-- BORROWER MODE CONTENT -->
         <!-- ========================================================== -->
 
-        <!-- 1. Borrower: Search & Status (Read-Only) -->
-        <div id="tab-borrower-status" class="tab-content">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">ค้นหาสถานะหนังสือแบบเรียลไทม์ (Real-time Status)</h2>
-            <div class="mb-4 flex gap-4">
-                <input type="text" id="borrower-search-input" placeholder="ค้นหาชื่อหนังสือ / ISBN / รหัส RFID" 
-                       class="flex-grow p-3 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                <button id="borrower-search-btn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ค้นหา</button>
+        <!-- 1. Borrower: Search & Status (Table View) -->
+        <div id="tab-borrower-status" class="tab-content relative z-10">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">ค้นหาสถานะหนังสือแบบเรียลไทม์</h2>
+            <div class="mb-8 flex gap-4 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="borrower-search-input" placeholder="ค้นหาชื่อหนังสือ / ISBN / รหัส RFID" 
+                           class="w-full pl-10 p-4 bg-transparent border-none focus:ring-0 text-gray-700 placeholder-gray-400 text-lg">
+                </div>
+                <button id="borrower-search-btn" class="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl hover:from-orange-600 hover:to-orange-700 transition duration-150 shadow-lg transform hover:-translate-y-0.5">
+                    ค้นหา
+                </button>
             </div>
-            <!-- Reusing the status table content -->
-            <div id="status-table-container" class="bg-gray-50 p-4 rounded-lg shadow-inner scroll-list">
+            
+            <!-- Book Status Table Container -->
+            <div id="status-table-container" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-xl scroll-list">
                 <p class="text-center text-gray-500 p-4">กำลังโหลดข้อมูลหนังสือ...</p>
             </div>
         </div>
 
         <!-- 2. Borrower: Personal History -->
-        <div id="tab-borrower-history" class="tab-content hidden">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">ประวัติการยืม-คืนของฉัน (สมาชิก 001)</h2>
-            <div class="bg-gray-50 p-4 rounded-lg shadow-inner scroll-list">
-                <div class="grid grid-cols-12 gap-2 font-bold text-sm text-gray-600 border-b pb-2 mb-2">
+        <div id="tab-borrower-history" class="tab-content hidden relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">ประวัติการยืม-คืนของฉัน</h2>
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 scroll-list">
+                <div class="grid grid-cols-12 gap-4 font-bold text-sm text-gray-500 border-b border-gray-100 pb-4 mb-4 uppercase tracking-wider">
                     <div class="col-span-4">ชื่อหนังสือ</div>
                     <div class="col-span-2">รหัส RFID</div>
                     <div class="col-span-2">วันที่ยืม</div>
                     <div class="col-span-3">วันที่คืน</div>
-                    <div class="col-span-1">สถานะ</div>
+                    <div class="col-span-1 text-center">สถานะ</div>
                 </div>
                 <!-- Container for JS rendered history data -->
                 <div id="borrower-history-content">
                     <!-- History data will be rendered here by JS -->
                 </div>
                 
-                <p class="mt-4 text-xs text-gray-500">* ข้อมูลนี้เป็นประวัติการยืม-คืนส่วนตัวของคุณทั้งหมด</p>
+                <p class="mt-6 text-xs text-gray-400 text-center">* ข้อมูลนี้เป็นประวัติการยืม-คืนส่วนตัวของคุณทั้งหมด</p>
             </div>
         </div>
 
         <!-- 3. Borrower: Automated Alerts -->
-        <div id="tab-borrower-alerts" class="tab-content hidden">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">รายการแจ้งเตือนและกำหนดส่งคืน</h2>
-            <div class="space-y-4">
+        <div id="tab-borrower-alerts" class="tab-content hidden relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">รายการแจ้งเตือนและกำหนดส่งคืน</h2>
+            <div class="space-y-6 max-w-3xl mx-auto">
                 
                 <!-- Overdue Alert -->
-                <div class="p-4 bg-red-100 border-l-4 border-red-500 rounded-lg flex justify-between items-center shadow">
+                <div class="p-6 bg-white border-l-8 border-red-500 rounded-xl flex justify-between items-center shadow-lg transform hover:scale-[1.01] transition duration-200">
                     <div>
-                        <p class="font-bold text-red-800">⚠️ เลยกำหนดส่งคืน!</p>
-                        <p class="text-sm text-red-700">หนังสือ: กลยุทธ์การลงทุนยุคใหม่ | กำหนดส่ง: 18 พ.ย. 2568</p>
-                        <p class="text-xs text-red-600 mt-1">ค่าปรับสะสม (จำลอง): <span id="fine-amount">20.00 บาท</span> (2 วัน x 10 บาท)</p>
+                        <div class="flex items-center mb-2">
+                            <span class="bg-red-100 text-red-600 p-1.5 rounded-full mr-3">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </span>
+                            <p class="font-bold text-red-700 text-xl">เลยกำหนดส่งคืน!</p>
+                        </div>
+                        <p class="text-base text-gray-600 ml-11">หนังสือ: <span class="font-semibold text-gray-800">กลยุทธ์การลงทุนยุคใหม่</span></p>
+                        <p class="text-base text-gray-600 ml-11">กำหนดส่ง: <span class="font-semibold text-red-600">18 พ.ย. 2568</span></p>
+                        <p class="text-xs text-red-600 mt-1 ml-11">ค่าปรับสะสม (จำลอง): <span id="fine-amount">6.00 บาท</span></p>
                     </div>
-                    <button class="text-red-500 hover:text-red-700 text-sm font-semibold">ส่งแจ้งเตือนซ้ำ</button>
+                    <button class="px-6 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-sm font-bold transition border border-red-200">ส่งแจ้งเตือนซ้ำ</button>
                 </div>
 
-                <!-- Reminder Alert (Updated with Email Preview Button) -->
-                <div class="p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center shadow">
-                    <div class="mb-2 md:mb-0">
-                        <p class="font-bold text-yellow-800">🔔 ใกล้ถึงกำหนดส่งคืน</p>
-                        <p class="text-sm text-yellow-700">หนังสือ: พลังของนิสัย (The Power of Habit) | กำหนดส่ง: 25 พ.ย. 2568</p>
-                        <p class="text-xs text-yellow-600 mt-1">การแจ้งเตือนนี้ถูกส่งทางอีเมลและแอปพลิเคชัน</p>
+                <!-- Reminder Alert -->
+                <div class="p-6 bg-white border-l-8 border-amber-400 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg transform hover:scale-[1.01] transition duration-200">
+                    <div class="mb-4 md:mb-0">
+                         <div class="flex items-center mb-2">
+                            <span class="bg-amber-100 text-amber-600 p-1.5 rounded-full mr-3">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            </span>
+                            <p class="font-bold text-amber-700 text-xl">ใกล้ถึงกำหนดส่งคืน</p>
+                        </div>
+                        <p class="text-base text-gray-600 ml-11">หนังสือ: <span class="font-semibold text-gray-800">พลังของนิสัย (The Power of Habit)</span></p>
+                        <p class="text-base text-gray-600 ml-11">กำหนดส่ง: <span class="font-semibold text-amber-600">25 พ.ย. 2568</span></p>
                     </div>
-                    <div class="flex gap-2">
-                        <button id="preview-email-btn" class="px-3 py-1 bg-yellow-500 text-white text-sm font-semibold rounded-xl hover:bg-yellow-600 transition duration-150 shadow-md">
+                    <div class="flex gap-3 ml-11 md:ml-0">
+                        <button id="preview-email-btn" class="px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition duration-150 shadow-md">
                             ดูตัวอย่างอีเมล
                         </button>
-                        <button class="text-yellow-500 hover:text-yellow-700 text-sm font-semibold">จัดการการแจ้งเตือน</button>
                     </div>
                 </div>
 
                 <!-- Confirmation/Status Message -->
-                <div class="p-4 bg-green-100 border-l-4 border-green-500 rounded-lg shadow">
-                    <p class="font-bold text-green-800">✅ การดำเนินการเสร็จสมบูรณ์</p>
-                    <div id="return-confirmation-msg" class="text-sm text-green-700">หนังสือ "การทำอาหารเพื่อสุขภาพ" ถูกคืนสำเร็จและอยู่ระหว่างการจัดเข้าชั้น</div>
+                <div class="p-6 bg-white border-l-8 border-emerald-500 rounded-xl shadow-md">
+                     <div class="flex items-center mb-2">
+                        <span class="bg-emerald-100 text-emerald-600 p-1 rounded-full mr-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </span>
+                        <p class="font-bold text-emerald-800 text-lg">การดำเนินการเสร็จสมบูรณ์</p>
+                    </div>
+                    <div id="return-confirmation-msg" class="text-sm text-emerald-700 ml-9">หนังสือ "การทำอาหารเพื่อสุขภาพ" ถูกคืนสำเร็จและอยู่ระหว่างการจัดเข้าชั้น</div>
                 </div>
 
                 <!-- No Alerts -->
@@ -204,121 +280,144 @@
         <!-- ========================================================== -->
 
         <!-- 1. Librarian: Borrow/Return Management -->
-        <div id="tab-librarian-management" class="tab-content hidden">
-            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">1. การจัดการยืม-คืน (Borrow/Return Management)</h2>
-            <div class="bg-white p-8 rounded-2xl mb-6 border border-gray-200 shadow-xl">
-                <p class="text-base text-gray-600 mb-6">กรุณาสแกนรหัสหนังสือและระบุรหัสสมาชิกเพื่อดำเนินการยืมหรือคืน</p>
+        <div id="tab-librarian-management" class="tab-content hidden relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">การจัดการยืม-คืน</h2>
+            <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl">
+                <div class="bg-orange-50 p-4 rounded-xl mb-8 border border-orange-100 flex items-center text-orange-800">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="font-medium">กรุณาสแกนรหัสหนังสือและระบุรหัสสมาชิกเพื่อดำเนินการยืมหรือคืน</span>
+                </div>
 
-                <div class="flex flex-col md:flex-row gap-5 items-end mb-5">
-                    <div class="flex-grow w-full">
-                        <label for="rfid-input" class="block text-sm font-medium text-gray-700 mb-2">สแกนรหัส RFID/บาร์โค้ดหนังสือ</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div>
+                        <label for="rfid-input" class="block text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">สแกนรหัส RFID/บาร์โค้ดหนังสือ</label>
                         <input type="text" id="rfid-input" placeholder="สแกนรหัส RFID หรือพิมพ์รหัสหนังสือ" 
-                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-base">
+                               class="w-full p-4 border-2 border-gray-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition duration-200 text-lg outline-none bg-gray-50 focus:bg-white">
+                    </div>
+                    <div>
+                        <label for="borrower-id-input" class="block text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">รหัสสมาชิกผู้ยืม (จำเป็นสำหรับการยืม)</label>
+                        <input type="text" id="borrower-id-input" placeholder="ป้อนรหัสสมาชิก (เช่น USER002)" 
+                               class="w-full p-4 border-2 border-gray-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition duration-200 text-lg outline-none bg-gray-50 focus:bg-white">
                     </div>
                 </div>
                 
-                <div class="mt-4 flex flex-col md:flex-row gap-5 items-end">
-                    <div class="flex-grow w-full">
-                        <label for="borrower-id-input" class="block text-sm font-medium text-gray-700 mb-2">รหัสสมาชิกผู้ยืม (Required for Borrow)</label>
-                        <input type="text" id="borrower-id-input" placeholder="ป้อนรหัสสมาชิก (เช่น USER002)" 
-                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-base">
-                    </div>
-                    <div class="flex gap-3 w-full md:w-auto">
-                        <button id="borrow-btn" class="flex-1 px-8 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition duration-150 shadow-md text-base">
-                            บันทึกการยืม
-                        </button>
-                        <button id="return-btn" class="flex-1 px-8 py-3.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition duration-150 shadow-md text-base">
-                            บันทึกการคืน
-                        </button>
-                    </div>
+                <div class="flex gap-4 mt-8">
+                    <button id="borrow-btn" class="flex-1 px-8 py-5 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition duration-200 shadow-lg hover:shadow-xl text-lg transform hover:-translate-y-1 flex justify-center items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        บันทึกการยืม
+                    </button>
+                    <button id="return-btn" class="flex-1 px-8 py-5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition duration-200 shadow-lg hover:shadow-xl text-lg transform hover:-translate-y-1 flex justify-center items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                        บันทึกการคืน
+                    </button>
                 </div>
-                <p class="mt-5 text-xs text-gray-500 text-center md:text-left">ระบบจะทำการบันทึกสถานะและตำแหน่งหนังสือโดยอัตโนมัติ</p>
             </div>
         </div>
 
         <!-- 2. Librarian: All Book Tracking -->
-        <div id="tab-librarian-tracking" class="tab-content hidden">
-            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">2. สถานะหนังสือทั้งหมดแบบเรียลไทม์ (Full Inventory Status)</h2>
-            <div class="mb-4 flex gap-4">
-                <input type="text" id="librarian-search-input" placeholder="ค้นหาชื่อหนังสือ / ISBN / รหัส RFID" 
-                       class="flex-grow p-3 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                <button id="librarian-search-btn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ค้นหา</button>
+        <div id="tab-librarian-tracking" class="tab-content hidden relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">สถานะหนังสือทั้งหมด (Admin View)</h2>
+            <div class="mb-6 flex gap-4">
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="librarian-search-input" placeholder="ค้นหาชื่อหนังสือ / ISBN / รหัส RFID" 
+                        class="w-full pl-10 p-4 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-orange-400 focus:border-orange-400 transition duration-150 outline-none text-base">
+                </div>
+                <button id="librarian-search-btn" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ค้นหา</button>
             </div>
             <!-- Reusing the status table content -->
-            <div id="tracking-table-container" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl scroll-list">
+            <div id="tracking-table-container" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-xl scroll-list">
                 <p class="text-center text-gray-500 p-4">กำลังโหลดข้อมูลหนังสือ...</p>
             </div>
         </div>
         
-        <!-- 3. Librarian: Add New Book (NEW TAB) -->
-        <div id="tab-librarian-add" class="tab-content hidden">
-            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">3. เพิ่มหนังสือใหม่ (New Book Registration)</h2>
-            <div class="bg-white p-8 rounded-2xl mb-6 border border-gray-200 shadow-xl">
-                <p class="text-base text-gray-600 mb-6">กรุณากรอกข้อมูลหนังสือใหม่เพื่อบันทึกเข้าสู่ระบบฐานข้อมูลเรียลไทม์</p>
+        <!-- 3. Librarian: Add New Book -->
+        <div id="tab-librarian-add" class="tab-content hidden relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">เพิ่มหนังสือใหม่</h2>
+            <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl">
+                <div class="bg-indigo-50 p-4 rounded-xl mb-8 border border-indigo-100">
+                     <p class="text-sm text-indigo-800 font-medium">กรุณากรอกข้อมูลหนังสือใหม่เพื่อบันทึกเข้าสู่ระบบฐานข้อมูลเรียลไทม์</p>
+                </div>
                 
-                <div class="space-y-5">
+                <div class="space-y-6">
                     <div>
-                        <label for="new-title-input" class="block text-sm font-medium text-gray-700 mb-2">ชื่อหนังสือ</label>
+                        <label for="new-title-input" class="block text-sm font-bold text-gray-700 mb-2">ชื่อหนังสือ</label>
                         <input type="text" id="new-title-input" placeholder="เช่น กลยุทธ์การลงทุนยุคใหม่ 2" 
-                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-base">
+                               class="w-full p-4 border-2 border-indigo-100 rounded-xl shadow-sm focus:ring-indigo-400 focus:border-indigo-400 transition duration-150 text-base outline-none bg-indigo-50/30 focus:bg-white">
                     </div>
                     <div>
-                        <label for="new-rfid-input" class="block text-sm font-medium text-gray-700 mb-2">รหัส RFID/บาร์โค้ด (Key ID)</label>
+                        <label for="new-rfid-input" class="block text-sm font-bold text-gray-700 mb-2">รหัส RFID/บาร์โค้ด (Key ID)</label>
                         <input type="text" id="new-rfid-input" placeholder="สแกนรหัส RFID/บาร์โค้ด หรือพิมพ์ เช่น R2024008" 
-                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-base">
+                               class="w-full p-4 border-2 border-indigo-100 rounded-xl shadow-sm focus:ring-indigo-400 focus:border-indigo-400 transition duration-150 text-base outline-none bg-indigo-50/30 focus:bg-white">
                     </div>
                     <div>
-                        <label for="new-location-input" class="block text-sm font-medium text-gray-700 mb-2">ตำแหน่งชั้นวางเริ่มต้น</label>
+                        <label for="new-location-input" class="block text-sm font-bold text-gray-700 mb-2">ตำแหน่งชั้นวางเริ่มต้น</label>
                         <input type="text" id="new-location-input" placeholder="เช่น ชั้น B3 / 05" 
-                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-base">
+                               class="w-full p-4 border-2 border-indigo-100 rounded-xl shadow-sm focus:ring-indigo-400 focus:border-indigo-400 transition duration-150 text-base outline-none bg-indigo-50/30 focus:bg-white">
                     </div>
                 </div>
 
-                <button id="add-new-book-btn" class="mt-8 w-full py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition duration-150 shadow-md text-base">
-                    บันทึกหนังสือใหม่เข้าสู่ระบบ
+                <button id="add-new-book-btn" class="mt-10 w-full py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition duration-150 shadow-lg text-lg transform hover:-translate-y-0.5 flex justify-center items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    บันทึกหนังสือใหม่
                 </button>
             </div>
         </div>
         
-        <!-- 4. Librarian: Borrower List (NEW TAB) -->
-        <div id="tab-librarian-borrowers" class="tab-content hidden">
-            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">4. รายชื่อสมาชิกในระบบ (Registered Borrower List)</h2>
-            <div class="mb-4 flex gap-4">
+        <!-- 4. Librarian: Borrower List -->
+        <div id="tab-librarian-borrowers" class="tab-content hidden relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">รายชื่อสมาชิกในระบบ</h2>
+            <div class="mb-6 flex gap-4">
                 <input type="text" id="borrower-list-search-input" placeholder="ค้นหารหัสสมาชิก / ชื่อสมาชิก" 
-                       class="flex-grow p-3 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                <button id="borrower-list-search-btn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ค้นหา</button>
+                       class="flex-grow p-4 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-400 focus:border-blue-400 transition duration-150 outline-none text-base">
+                <button id="borrower-list-search-btn" class="px-8 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 transition duration-150 shadow-md">ค้นหา</button>
             </div>
-            <div id="borrower-list-container" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xl scroll-list">
+            <div id="borrower-list-container" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-xl scroll-list">
                 <p class="text-center text-gray-500 p-4">กำลังโหลดรายชื่อสมาชิก...</p>
             </div>
         </div>
 
-        <!-- 5. Librarian: Fines Management (NEW TAB) -->
-        <div id="tab-librarian-fines" class="tab-content hidden">
-            <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">5. จัดการค่าปรับ (Fines Management)</h2>
-            <div class="bg-white p-8 rounded-2xl mb-6 border border-gray-200 shadow-xl">
-                <p class="text-base text-gray-600 mb-6">ป้อนรหัสสมาชิกเพื่อตรวจสอบยอดค่าปรับค้างชำระและบันทึกการชำระเงิน</p>
+        <!-- 5. Librarian: Fines Management -->
+        <div id="tab-librarian-fines" class="tab-content hidden relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">จัดการค่าปรับ</h2>
+            <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl">
+                <p class="text-base text-gray-600 mb-6 font-medium">ป้อนรหัสสมาชิกเพื่อตรวจสอบยอดค่าปรับค้างชำระและบันทึกการชำระเงิน</p>
                 
                 <div class="flex flex-col md:flex-row gap-4 items-end">
                     <div class="flex-grow w-full">
-                        <label for="fine-borrower-input" class="block text-sm font-medium text-gray-700 mb-2">รหัสสมาชิก</label>
+                        <label for="fine-borrower-input" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">รหัสสมาชิก</label>
                         <input type="text" id="fine-borrower-input" placeholder="เช่น USER002" 
-                               class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-base">
+                               class="w-full p-4 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-orange-400 focus:border-orange-400 transition duration-150 text-lg outline-none">
                     </div>
-                    <button id="check-fine-btn" class="px-8 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition duration-150 shadow-md text-base w-full md:w-auto">
-                        ตรวจสอบค่าปรับ
+                    <button id="check-fine-btn" class="px-8 py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition duration-150 shadow-lg text-lg w-full md:w-auto transform hover:-translate-y-0.5">
+                        ตรวจสอบ
                     </button>
                 </div>
 
                 <!-- Fine Details Output -->
-                <div id="fine-details-output" class="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-200 hidden">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">สถานะค่าปรับของ: <span id="fine-borrower-name"></span></h3>
-                    <p class="text-sm text-gray-600 mb-3">ยอดค้างชำระปัจจุบัน (จำลอง): <span id="current-fine-total" class="text-xl font-bold text-red-600">0.00 บาท</span></p>
+                <div id="fine-details-output" class="mt-10 p-8 bg-orange-50 rounded-2xl border border-orange-100 hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                                <span class="bg-orange-200 p-1 rounded mr-2"><svg class="w-5 h-5 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span>
+                                <span id="fine-borrower-name"></span>
+                            </h3>
+                            <p class="text-sm text-gray-500">สถานะ: <span id="fine-status" class="font-bold px-2 py-0.5 rounded text-xs bg-red-100 text-red-600">ค้างชำระ</span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500 mb-1">ยอดค้างชำระรวม</p>
+                            <p id="current-fine-total" class="text-3xl font-extrabold text-red-600">0.00 บาท</p>
+                        </div>
+                    </div>
                     
-                    <div class="flex gap-4 items-center">
-                        <p class="text-sm text-gray-600">สถานะ: <span id="fine-status" class="font-semibold text-red-600">ค้างชำระ</span></p>
-                        <button id="pay-fine-btn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition duration-150 shadow-md text-sm disabled:bg-gray-400">
-                            บันทึกการชำระค่าปรับ
+                    <div class="mt-6 pt-6 border-t border-orange-200 flex justify-end">
+                        <button id="pay-fine-btn" class="px-8 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition duration-150 shadow-md text-base disabled:bg-gray-300 disabled:cursor-not-allowed transform hover:-translate-y-0.5 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            บันทึกการชำระเงินเรียบร้อย
                         </button>
                     </div>
                 </div>
@@ -330,30 +429,42 @@
 
     <!-- Custom Modal for general Notifications/Errors (Existing) -->
     <div id="custom-modal" class="modal">
-        <div class="modal-content">
-            <p id="modal-message" class="text-lg font-semibold mb-4 text-center"></p>
-            <button id="modal-close-btn" class="w-full py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ตกลง</button>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl border-t-4 border-orange-500">
+            <div class="text-center p-6">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-orange-100 mb-6">
+                    <svg class="h-8 w-8 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div id="modal-message" class="text-xl font-medium text-gray-900 mb-6"></div>
+                <button id="modal-close-btn" class="w-full py-3.5 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition duration-150 shadow-lg text-lg">ตกลง</button>
+            </div>
         </div>
     </div>
 
     <!-- Modal for Email Preview -->
     <div id="email-preview-modal" class="modal">
-        <div class="email-modal-content">
-            <div class="flex justify-between items-center border-b pb-2 mb-4">
-                <h3 class="text-xl font-bold text-gray-800">ตัวอย่างอีเมลแจ้งเตือนการคืนหนังสือ</h3>
-                <button onclick="closeEmailPreviewModal()" class="text-gray-400 hover:text-gray-600 font-bold text-2xl">&times;</button>
+        <div class="email-modal-content bg-white rounded-2xl shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    ตัวอย่างอีเมลแจ้งเตือน
+                </h3>
+                <button onclick="closeEmailPreviewModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
             
-            <div class="bg-white border border-gray-200 p-4 rounded-lg shadow-inner">
-                <p class="text-sm font-medium text-gray-700 mb-2">หัวข้อ: 🔔 แจ้งเตือน: ใกล้ถึงกำหนดส่งคืนหนังสือจากระบบห้องสมุด "ความรู้รอบโลก"</p>
-                <hr class="mb-3">
-                <div class="text-gray-800 text-sm space-y-3">
+            <div class="bg-gray-50 border border-gray-200 p-6 rounded-xl shadow-inner mb-6">
+                <p class="text-sm font-semibold text-gray-700 mb-3">หัวข้อ: 🔔 แจ้งเตือน: ใกล้ถึงกำหนดส่งคืนหนังสือจากระบบห้องสมุด "ความรู้รอบโลก"</p>
+                <hr class="border-gray-200 mb-4">
+                <div class="text-gray-600 text-sm space-y-3 leading-relaxed">
                     <p>เรียน สมาชิกหมายเลข 001,</p>
                     <p>ระบบแจ้งเตือนอัตโนมัติของห้องสมุดฯ ขอเรียนแจ้งให้ทราบว่า หนังสือที่คุณได้ยืมไปใกล้ถึงกำหนดส่งคืนแล้ว</p>
                     
-                    <div class="p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                        <p class="font-semibold">รายละเอียด:</p>
-                        <ul class="list-disc list-inside ml-2 text-xs space-y-1">
+                    <div class="p-4 bg-white border border-orange-100 rounded-lg shadow-sm my-3">
+                        <p class="font-bold text-orange-700 mb-2">รายละเอียด:</p>
+                        <ul class="list-disc list-inside ml-2 space-y-1 text-gray-700">
                             <li>ชื่อหนังสือ: พลังของนิสัย (The Power of Habit)</li>
                             <li>วันที่ยืม: 11 พ.ย. 2568</li>
                             <li>กำหนดส่งคืน: <span class="text-red-600 font-bold">25 พ.ย. 2568</span></li>
@@ -363,39 +474,39 @@
 
                     <p>กรุณาตรวจสอบและดำเนินการส่งคืนก่อนกำหนด เพื่อป้องกันการถูกปรับ และเพื่อให้เพื่อนๆ ท่านอื่นสามารถยืมหนังสือได้ต่อ</p>
                     <p>ขอขอบคุณที่ให้ความร่วมมือครับ/ค่ะ</p>
-                    <p class="text-xs text-gray-500">---<br>ระบบแจ้งเตือนอัตโนมัติ<br>ห้องสมุด "ความรู้รอบโลก"</p>
+                    <p class="text-xs text-gray-400 mt-4">---<br>ระบบแจ้งเตือนอัตโนมัติ<br>ห้องสมุด "ความรู้รอบโลก"</p>
                 </div>
             </div>
             
-            <button onclick="closeEmailPreviewModal()" class="mt-6 w-full py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">ปิด</button>
+            <button onclick="closeEmailPreviewModal()" class="w-full py-3 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300 transition duration-150">ปิดหน้าต่าง</button>
         </div>
     </div>
     
     <!-- Modal for Book Editing -->
     <div id="edit-book-modal" class="modal">
-        <div class="edit-modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">แก้ไขข้อมูลหนังสือ: <span id="edit-book-rfid-display" class="text-blue-600"></span></h3>
-            <div class="space-y-4 pt-2">
+        <div class="edit-modal-content bg-white rounded-2xl shadow-2xl border-t-4 border-yellow-400">
+            <h3 class="text-xl font-bold text-gray-800 mb-6 border-b pb-4">แก้ไขข้อมูล: <span id="edit-book-rfid-display" class="text-blue-600 font-mono"></span></h3>
+            <div class="space-y-5 pt-2">
                 <input type="hidden" id="edit-original-rfid">
 
                 <div>
-                    <label for="edit-title" class="block text-sm font-medium text-gray-700 mb-2">ชื่อหนังสือ</label>
-                    <input type="text" id="edit-title" class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <label for="edit-title" class="block text-sm font-bold text-gray-700 mb-2">ชื่อหนังสือ/ข้อมูล</label>
+                    <input type="text" id="edit-title" class="w-full p-4 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-yellow-400 focus:border-yellow-400 transition duration-150 text-base outline-none">
                 </div>
                 
-                <div>
-                    <label for="edit-location" class="block text-sm font-medium text-gray-700 mb-2">ตำแหน่งชั้นวาง</label>
-                    <input type="text" id="edit-location" class="w-full p-3.5 border-2 border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                <div id="edit-location-group">
+                    <label for="edit-location" class="block text-sm font-bold text-gray-700 mb-2">ตำแหน่งชั้นวาง/รายละเอียดเพิ่มเติม</label>
+                    <input type="text" id="edit-location" class="w-full p-4 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-yellow-400 focus:border-yellow-400 transition duration-150 text-base outline-none">
                 </div>
 
-                <p class="text-sm text-red-600 pt-2 border-t border-gray-100">**คำเตือน:** หากหนังสือถูกยืมออกอยู่ (สถานะ: <span id="edit-status-display" class="font-semibold"></span>) การแก้ไขรหัส RFID จะทำให้สถานะถูกรีเซ็ต</p>
+                <p class="text-xs text-gray-500 pt-2 border-t border-gray-100">สถานะปัจจุบัน: <span id="edit-status-display" class="font-semibold"></span></p>
             </div>
             
-            <div class="flex gap-3 mt-6">
-                <button id="save-edit-btn" class="flex-1 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition duration-150 shadow-md text-base">
+            <div class="flex gap-4 mt-8">
+                <button id="save-edit-btn" class="flex-1 py-4 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition duration-150 shadow-md text-base transform hover:-translate-y-0.5">
                     บันทึกการแก้ไข
                 </button>
-                <button onclick="closeEditBookModal()" class="flex-1 py-3.5 bg-gray-500 text-white font-semibold rounded-xl hover:bg-gray-600 transition duration-150 shadow-md text-base">
+                <button onclick="closeEditBookModal()" class="flex-1 py-4 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300 transition duration-150 shadow-md text-base">
                     ยกเลิก
                 </button>
             </div>
@@ -413,7 +524,7 @@
         // setLogLevel('Debug'); // Uncomment for detailed Firestore debugging
 
         // --- Configuration & Data ---
-        const FINE_PER_DAY = 3.00; // ค่าปรับต่อวัน (บาท) *** CHANGED TO 3.00 ***
+        const FINE_PER_DAY = 3.00; // ค่าปรับต่อวัน (บาท)
         const TODAY_MOCK = new Date('2025-11-20'); // วันที่ปัจจุบันจำลอง (20 พ.ย. 2568)
 
         // Hardcoded Firebase Config based on user's request
@@ -448,10 +559,10 @@
 
         // Mock Borrower Data for validation and list display
         const mockBorrowerData = {
-            'USER001': { name: 'สมาชิก กิตติมาศักดิ์' },
-            'USER002': { name: 'นักเรียน A' },
-            'USER003': { name: 'นักเรียน B' },
-            'สมาชิก 001': { name: 'ผู้ใช้หลัก (Mock)' } // For mock history use
+            'USER001': { name: 'สมาชิก กิตติมาศักดิ์', email: 'user001@library.com' },
+            'USER002': { name: 'นักเรียน A', email: 'student_a@library.com' },
+            'USER003': { name: 'นักเรียน B', email: 'student_b@library.com' },
+            'สมาชิก 001': { name: 'ผู้ใช้หลัก (Mock)', email: 'mock_user@library.com' } // For mock history use
         };
 
 
@@ -530,7 +641,11 @@
 
             }, (error) => {
                 console.error("Error listening to book data:", error);
-                document.getElementById('status-table-container').innerHTML = `<p class="text-center text-red-500 p-4">เกิดข้อผิดพลาดในการโหลดข้อมูล: โปรดตรวจสอบกฎความปลอดภัยของ Firestore</p>`;
+                // Safety check for element existence before updating innerHTML
+                const statusTable = document.getElementById('status-table-container');
+                if (statusTable) {
+                    statusTable.innerHTML = `<p class="text-center text-red-500 p-4">เกิดข้อผิดพลาดในการโหลดข้อมูล: โปรดตรวจสอบกฎความปลอดภัยของ Firestore</p>`;
+                }
             });
             
             seedInitialDataIfEmpty();
@@ -558,12 +673,13 @@
             const overdueAlert = document.querySelector('.p-4.bg-red-100');
             
             if (fineData && fineData.totalFine > 0) {
-                fineElement.textContent = `${fineData.totalFine.toFixed(2)} บาท (${fineData.books[0].days} วัน x ${FINE_PER_DAY} บาท)`;
-                overdueAlert.classList.remove('hidden');
+                // *** FIXED: Now only displays the total fine amount in Baht ***
+                if(fineElement) fineElement.textContent = `${fineData.totalFine.toFixed(2)} บาท`; 
+                if(overdueAlert) overdueAlert.classList.remove('hidden');
             } else {
-                fineElement.textContent = `0.00 บาท`;
+                if(fineElement) fineElement.textContent = `0.00 บาท`;
                 // Hide overdue warning if no fine exists
-                overdueAlert.classList.add('hidden');
+                if(overdueAlert) overdueAlert.classList.add('hidden');
             }
         }
         
@@ -572,12 +688,12 @@
             if (Object.keys(currentBookData).length === 0) {
                 console.log("Seeding initial data...");
                 const initialBooks = {
-                    'R2024001': { title: 'การจัดการฐานข้อมูลขั้นสูง', location: 'ชั้น A2 / 01', status: 'onshelf', borrower: null, dateDue: null },
-                    'R2024002': { title: 'โลกของควอนตัมฟิสิกส์', location: 'ยืมออก', status: 'borrowed', borrower: 'USER005', dateDue: '22 พ.ย. 2568' },
-                    'R2024003': { title: 'การทำอาหารเพื่อสุขภาพ', location: 'ชั้น A3 / 02', status: 'onshelf', borrower: null, dateDue: null },
-                    'R2024004': { title: 'คู่มือการเขียนโปรแกรม Python', location: 'ชั้น A5 / 12', status: 'onshelf', borrower: null, dateDue: null },
-                    'R2024005': { title: 'กลยุทธ์การลงทุนยุคใหม่', location: 'ยืมออก', status: 'borrowed', borrower: 'สมาชิก 001', dateDue: '18 พ.ย. 2568' }, // Overdue
-                    'R2024006': { title: 'เทคนิคการบริหารเวลาขั้นเทพ', location: 'ชั้น B1 / 03', status: 'onshelf', borrower: null, dateDue: null }
+                    'R2024001': { title: 'การจัดการฐานข้อมูลขั้นสูง', location: 'ชั้น A2 / 01', status: 'onshelf', borrower: null, dateDue: null, mockCoverClass: 'cover-1' },
+                    'R2024002': { title: 'โลกของควอนตัมฟิสิกส์', location: 'ยืมออก', status: 'borrowed', borrower: 'USER005', dateDue: '22 พ.ย. 2568', mockCoverClass: 'cover-2' },
+                    'R2024003': { title: 'การทำอาหารเพื่อสุขภาพ', location: 'ชั้น A3 / 02', status: 'onshelf', borrower: null, dateDue: null, mockCoverClass: 'cover-3' },
+                    'R2024004': { title: 'คู่มือการเขียนโปรแกรม Python', location: 'ชั้น A5 / 12', status: 'onshelf', borrower: null, dateDue: null, mockCoverClass: 'cover-4' },
+                    'R2024005': { title: 'กลยุทธ์การลงทุนยุคใหม่', location: 'ยืมออก', status: 'borrowed', borrower: 'สมาชิก 001', dateDue: '18 พ.ย. 2568', mockCoverClass: 'cover-5' }, // Overdue
+                    'R2024006': { title: 'เทคนิคการบริหารเวลาขั้นเทพ', location: 'ชั้น B1 / 03', status: 'onshelf', borrower: null, dateDue: null, mockCoverClass: 'cover-1' }
                 };
                 
                 // Only seed if actually empty (to prevent overwriting if another client is fast)
@@ -668,9 +784,9 @@
                 }
                 
                 // Add Delete button only in Librarian Tracking Mode
-                let actionButtons = '';
+                let deleteButton = '';
                 if (isLibrarianMode) {
-                    actionButtons = `
+                    deleteButton = `
                         <div class="col-span-1 text-center flex gap-1 justify-center">
                             <button onclick="openEditBookModal('${rfid}')" class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-1 px-2 rounded-lg shadow-md">แก้ไข</button>
                             <button onclick="confirmDelete('${rfid}', '${book.title}')" class="text-xs bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded-lg shadow-md">ลบ</button>
@@ -689,7 +805,7 @@
                             </span>
                         </div>
                         <div class="col-span-2 text-gray-500">${locationText}</div>
-                        ${actionButtons}
+                        ${deleteButton}
                     </div>
                 `;
             });
@@ -701,6 +817,9 @@
          * Filters book data based on search term and updates the respective tables.
          */
         function filterBooks(searchTerm, tableId) {
+             // Safety check: if tableId element doesn't exist, do nothing
+            if (!document.getElementById(tableId)) return;
+            
             const lowerCaseSearchTerm = searchTerm.toLowerCase();
             const filteredData = {};
             const isLibrarianMode = tableId === 'tracking-table-container';
@@ -721,6 +840,8 @@
             document.getElementById(tableId).innerHTML = generateStatusTableHTML(filteredData, isLibrarianMode);
         }
 
+        // ... (Borrower History, List, Fines, Modals, Init - No Changes) ...
+        
         /**
          * Generates and renders the HTML for the Borrower's Personal History table.
          */
@@ -774,8 +895,10 @@
             const container = document.getElementById('borrower-list-container');
             let html = `
                 <div class="grid grid-cols-12 gap-2 font-bold text-sm text-gray-600 border-b pb-2 mb-2">
-                    <div class="col-span-4">รหัสสมาชิก</div>
-                    <div class="col-span-8">ชื่อสมาชิก</div>
+                    <div class="col-span-3">รหัสสมาชิก</div>
+                    <div class="col-span-5">ชื่อสมาชิก</div>
+                    <div class="col-span-3">อีเมลติดต่อ</div>
+                    <div class="col-span-1 text-center">จัดการ</div>
                 </div>
             `;
 
@@ -788,10 +911,17 @@
 
             sortedIds.forEach(id => {
                 const borrower = data[id];
+                // Exclude the 'สมาชิก 001' mock user from editing if it's the default internal user
+                const isEditable = id !== 'สมาชิก 001'; 
+                
                 html += `
                     <div class="grid grid-cols-12 gap-2 py-2 border-b text-sm items-center">
-                        <div class="col-span-4 font-semibold text-blue-600">${id}</div>
-                        <div class="col-span-8">${borrower.name}</div>
+                        <div class="col-span-3 font-semibold text-blue-600">${id}</div>
+                        <div class="col-span-5">${borrower.name}</div>
+                        <div class="col-span-3 text-gray-500">${borrower.email || '-'}</div>
+                        <div class="col-span-1 text-center">
+                            ${isEditable ? `<button onclick="openEditBorrowerModal('${id}')" class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-1 px-2 rounded-lg shadow-md">แก้ไข</button>` : `<span class="text-gray-400">-</span>`}
+                        </div>
                     </div>
                 `;
             });
@@ -811,7 +941,7 @@
             } else {
                 for (const id in mockBorrowerData) {
                     const borrower = mockBorrowerData[id];
-                    const searchString = (id + borrower.name).toLowerCase();
+                    const searchString = (id + borrower.name + (borrower.email || '')).toLowerCase();
                     
                     if (searchString.includes(lowerCaseSearchTerm)) {
                         filteredData[id] = borrower;
@@ -826,10 +956,17 @@
          * Function to initialize and update the status tables in both views.
          */
         function updateStatusTables() {
-            // Borrower Status Table
-            document.getElementById('status-table-container').innerHTML = generateStatusTableHTML(currentBookData, false);
-            // Librarian Tracking Table
-            document.getElementById('tracking-table-container').innerHTML = generateStatusTableHTML(currentBookData, true);
+            // Borrower Status Table (Card View)
+            // ADDED CHECK: Safety check to prevent updating null elements
+            const statusTableContainer = document.getElementById('status-table-container');
+            const trackingTableContainer = document.getElementById('tracking-table-container');
+
+            if (statusTableContainer) {
+                statusTableContainer.innerHTML = generateStatusTableHTML(currentBookData, false);
+            }
+            if (trackingTableContainer) {
+                trackingTableContainer.innerHTML = generateStatusTableHTML(currentBookData, true);
+            }
         }
         
         // --- Delete Confirmation and Action ---
@@ -972,6 +1109,65 @@
                 showModal(`เกิดข้อผิดพลาดในการบันทึกการแก้ไข: ${error.message}`, 'error');
             }
         }
+        
+        // --- Borrower Editing Functions (Librarian) ---
+        
+        /**
+         * Opens the modal for editing a specific borrower's details.
+         */
+        window.openEditBorrowerModal = function(borrowerId) {
+            const borrower = mockBorrowerData[borrowerId];
+            if (!borrower) return;
+            
+            // 1. Set Modal Title
+            const modalTitleElement = document.querySelector('#edit-book-modal h3');
+            modalTitleElement.innerHTML = `แก้ไขข้อมูลสมาชิก: <span id="edit-borrower-id-display" class="text-blue-600">${borrowerId}</span>`;
+
+            // 2. Setup Custom Fields in the Modal body
+            document.querySelector('#edit-book-modal .space-y-4').innerHTML = `
+                <input type="hidden" id="edit-borrower-id" value="${borrowerId}">
+                <div>
+                    <label for="edit-borrower-name" class="block text-sm font-bold text-gray-700 mb-2">ชื่อสมาชิก</label>
+                    <input type="text" id="edit-borrower-name" value="${borrower.name}" class="w-full p-3.5 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                </div>
+                <div>
+                    <label for="edit-borrower-email" class="block text-sm font-bold text-gray-700 mb-2">อีเมลติดต่อ</label>
+                    <input type="email" id="edit-borrower-email" value="${borrower.email || ''}" class="w-full p-3.5 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                </div>
+                <p class="text-sm text-blue-600 pt-2 border-t border-gray-100">การแก้ไขนี้มีผลต่อข้อมูลติดต่อสำหรับการแจ้งเตือน</p>
+            `;
+
+            // 3. Overwrite save button to call borrower save function
+            const saveBtn = document.getElementById('save-edit-btn');
+            saveBtn.onclick = handleSaveBorrowerEdit;
+            
+            document.getElementById('edit-book-modal').style.display = 'block';
+        }
+        
+        /**
+         * Handles saving the edited borrower data (local mock data only).
+         */
+        function handleSaveBorrowerEdit() {
+            const borrowerId = document.getElementById('edit-borrower-id').value;
+            const newName = document.getElementById('edit-borrower-name').value.trim();
+            const newEmail = document.getElementById('edit-borrower-email').value.trim();
+
+            if (!newName) {
+                showModal('กรุณากรอกชื่อสมาชิกให้ครบถ้วน', 'error');
+                return;
+            }
+
+            // Update Mock Data
+            mockBorrowerData[borrowerId].name = newName;
+            mockBorrowerData[borrowerId].email = newEmail;
+            
+            // Re-render the list
+            renderBorrowerList(mockBorrowerData);
+
+            showModal(`บันทึกการแก้ไขข้อมูลสมาชิก "${newName}" สำเร็จ!`, 'success');
+            window.closeEditBookModal(); // Use the common close modal function
+        }
+
 
         // --- Fine Management Logic ---
         
@@ -1335,14 +1531,26 @@
                     closeEmailPreviewModal();
                 }
                 if (event.target === document.getElementById('edit-book-modal')) {
-                    closeEditBookModal();
+                    // Check if the click was inside the content or on the modal backdrop
+                    const modalContent = document.querySelector('#edit-book-modal .edit-modal-content');
+                    if (!modalContent.contains(event.target)) {
+                         closeEditBookModal();
+                    }
                 }
             });
             
             resetModalButton(); // Reset the modal button initially in case the user opens the modal using the confirmation button
 
             // Edit Button (Save)
-            document.getElementById('save-edit-btn').addEventListener('click', handleSaveEdit);
+            document.getElementById('save-edit-btn').addEventListener('click', function() {
+                // Determine which save function to call based on which modal is open
+                const modalTitle = document.querySelector('#edit-book-modal h3').textContent;
+                if (modalTitle.includes('แก้ไขข้อมูลหนังสือ')) {
+                    handleSaveEdit();
+                } else if (modalTitle.includes('แก้ไขข้อมูลสมาชิก')) {
+                    handleSaveBorrowerEdit();
+                }
+            });
             
             // Fine Management Buttons
             document.getElementById('check-fine-btn').addEventListener('click', handleCheckFine);
